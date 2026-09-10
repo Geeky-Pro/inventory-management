@@ -138,6 +138,8 @@ const dict = {
     already_exists: "المجموعة موجودة بالفعل",
     saving: "جارٍ الحفظ...",
     save_error: "حدث خطأ أثناء الحفظ",
+    expand_all: "عرض الكل",
+    collapse_all: "إخفاء الكل",
     sign_in: "دخول",
     login_failed: "فشل تسجيل الدخول. تحقق من اسم المستخدم وكلمة المرور.",
     email_not_confirmed:
@@ -295,6 +297,8 @@ const dict = {
     already_exists: "Category already exists",
     saving: "Saving...",
     save_error: "Error saving",
+    expand_all: "Expand All",
+    collapse_all: "Collapse All",
     sign_in: "Sign In",
     login_failed: "Login failed. Check your username and password.",
     email_not_confirmed:
