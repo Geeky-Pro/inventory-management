@@ -38,3 +38,6 @@ previous chat.md
 previous_chat.md
 supabase/.temp
 full_backup.sql
+.agents/*
+.claude/*
+skills-lock.json
