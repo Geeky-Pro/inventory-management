@@ -4,14 +4,14 @@
 
 An inventory and sales management system with a built-in accounting
 component (multi-currency customer debts), with a fully bilingual
-Arabic/English interface (RTL/LTR), built on React 19 + TanStack Start
-(SSR) + Supabase.
+Arabic/English interface (RTL/LTR), built on React 19 + Next.js (App Router)
++ Supabase.
 
 **Precise target audience (store size, retail vs. wholesale, expected
 number of users):** [Needs clarification from the owner — not clear from
 the code]
 
-## Features actually built (from `src/routes/_authenticated/`)
+## Features actually built (from `src/app/(authenticated)/`)
 
 - **Dashboard** — main landing page.
 - **Items / Categories / Units** — item management, with a **multi-unit

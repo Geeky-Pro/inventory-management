@@ -7,20 +7,18 @@
   `@typescript-eslint/no-unused-vars` is intentionally disabled — don't
   re-enable it without discussion, this is an existing decision, not an
   oversight.
-- Importing the Next.js `server-only` package is forbidden — use a
-  `*.server.ts` suffix or `@tanstack/react-start/server-only` instead
-  (enforced as an ESLint error).
+- Importing Next.js `server-only` is standard for marking backend logic. 
+- Avoid directly executing heavy backend logic in UI components; prefer extracting it to Server Actions.
 
 ## Before any PR
 
 - `npm run lint` must pass with no critical errors.
 - `npm run format` (Prettier) on every changed file.
-- `src/routeTree.gen.ts` is never edited by hand, ever.
 
 ## Shared components — use these before reinventing them
 
 Any new CRUD page is built on top of these four first (check any existing
-page in `src/routes/_authenticated/` as a reference):
+page in `src/app/(authenticated)/` as a reference):
 - `DataTable` — a generic table with filtering and pagination.
 - `ConfirmDelete` — a reusable delete-confirmation dialog.
 - `PageHeader` — a unified page header (title + action buttons).
@@ -35,12 +33,11 @@ page in `src/routes/_authenticated/` as a reference):
   requested — any new component of this kind must follow the existing
   theme and spacing conventions.
 
-## Server functions
+## Server Actions
 
-- Collected in `src/lib/api/*.functions.ts` (current naming pattern:
-  `admin.ts`, `users.functions.ts`, `example.functions.ts`). Any new
-  server logic follows the same location and naming — it doesn't get
-  scattered inside UI components.
+- Collected in `src/app/actions/` or `src/lib/api/` (e.g. `users.ts`, `admin.ts`). 
+- Any new server logic follows the same location and naming (must be marked with `"use server"`).
+- Server actions should return serializable JSON data or appropriate React state responses.
 
 ## Migrations
 

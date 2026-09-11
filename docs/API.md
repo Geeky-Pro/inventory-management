@@ -1,85 +1,113 @@
-# API & Server Functions Reference
+# API & Server Actions Reference
 
-هذا المستند يصف واجهات برمجة التطبيقات الداخلية (server functions) ونمط الدعوة بينها وبين العميل.
+هذا المستند يصف واجهات برمجة التطبيقات الداخلية وكيفية الاتصال الآمن بين العميل (Client) والخادم (Server) في بيئة Next.js.
 
 ## نظرة عامة
 
-التطبيق يستخدم `createServerFn` من `@tanstack/react-start` لإنشاء دوال تعمل على الخادم ويمكن استدعاؤها من العميل بطريقة آمنة ومؤطرة. هذه الدوال تشغّل كـ server-only code داخل handler، مما يسمح باستيراد وحدات server-only (مثل مفاتيح `service_role` أو مكتبات لا يجب شحنها إلى العميل).
+بعد الترحيل إلى **Next.js App Router**، يعتمد التطبيق بالكامل على **Server Actions** لتنفيذ العمليات التي تتطلب خادماً آمناً. لا يوجد مسارات API تقليدية (REST endpoints) إلا عند الحاجة القصوى (مثلاً للويب هوكس أو الاتصال بتطبيقات خارجية)، بل يتم استدعاء دوال الخادم مباشرة من مكونات العميل.
 
-## دوال موجودة حاليا
+## ما هي الـ Server Actions؟
 
-- `getGreeting` — مثال توضيحي موجود في `src/lib/api/example.functions.ts`.
-  - طريقة: POST
-  - مدخلات: `{ name: string }` (مُحقّق عبر `zod`)
-  - الاستخدام: يعيد كائن تحيّة مع حالة البيئة من الخادم.
+الـ Server Actions في Next.js هي دوال غير متزامنة (Async Functions) تعمل حصراً على الخادم. يتم تمييزها باستخدام التوجيه `"use server"`.
+تسمح لك هذه الدوال بتنفيذ مهام آمنة مثل:
+- استخدام المفاتيح السرية مثل `SUPABASE_SERVICE_ROLE_KEY`.
+- تعديل قواعد البيانات أو جلب بيانات محمية بدون القلق من تسريب المفاتيح.
+- تنفيذ المصادقة والتحقق من الصلاحيات بأمان قبل أي عملية.
 
-## كيفية الاستدعاء من العميل
+## كيفية إنشاء Server Action جديد
 
-من العميل يمكنك استدعاء الدالة مباشرة كما في المثال داخل الملف:
-
-```ts
-// مثال client-side
-const result = await getGreeting({ data: { name: "Ada" } });
-console.log(result.greeting); // "Hello, Ada!"
-```
-
-ملاحظات:
-
-- لا تحتاج إلى كتابة مسار HTTP يدوياً؛ TanStack Start يولّد كائنات client-side قابلة للاستدعاء عند استخدام `createServerFn`.
-- الدالة ترسل الطلب إلى السيرفر عبر fetch داخلي وتُعيد الاستجابة المفككة.
-
-## تفاصيل تقنية: ماذا يحدث عند الاستدعاء
-
-1. عند استدعاء `getGreeting(...)` من العميل، تُنشأ طلبة HTTP POST إلى نقطة نهاية داخلية تُديرها TanStack Start.
-2. قبل تنفيذ الـ handler، يتم تطبيق الـ middleware التي تم تسجيلها في `src/start.ts` مثل `auth-attacher` و`errorMiddleware`.
-3. داخل الـ handler تستطيع استدعاء كود server-only (قراءة `process.env`, استخدام `SUPABASE_SERVICE_ROLE_KEY`, الوصول إلى قواعد البيانات الآمنة).
-
-## المصادقة والـ middleware
-
-- `auth-attacher` — يضيف Authorization header المستخرج من جلسة العميل إلى طلبات server functions التي تُجرى نيابة عن المستخدم.
-
-Note: The legacy `auth-middleware` file was removed from the codebase; server functions rely on `auth-attacher` for attaching user tokens and use `supabaseAdmin` or server-side logic for admin operations. See `src/start.ts` and `src/integrations/supabase/auth-attacher.ts` for registration details.
-
-## إضافة دالة خادم جديدة
-
-1. أنشئ ملف جديد داخل `src/lib/api/` أو أضف إلى ملف موجود.
-2. استخدم النمط التالي:
+1. أنشئ الدالة في مجلد `src/app/actions/` أو `src/lib/api/` (يُفضل تجميع العمليات المرتبطة في ملف واحد، مثلاً `users.ts`).
+2. ضع `"use server"` في السطر الأول من الملف أو بداخل الدالة.
+3. تأكد من أن الدالة ترجع بيانات قابلة للتسلسل (Serializable) كـ JSON (بدون كائنات معقدة أو دوال).
 
 ```ts
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+"use server";
 
-export const myFn = createServerFn({ method: "POST" })
-  .inputValidator(
-    z.object({
-      /* ... */
-    }),
-  )
-  .handler(async ({ data, ctx }) => {
-    // كود server-only هنا
-    return { ok: true };
-  });
+import { supabaseAdmin } from "@/lib/supabase/admin";
+
+export async function updateUserStatus(userId: string, status: boolean) {
+  // كود الخادم الآمن هنا
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ is_active: status })
+    .eq("id", userId);
+    
+  if (error) throw new Error(error.message);
+  
+  return { success: true };
+}
 ```
 
-1. استدعِ `myFn({ data: { ... } })` من العميل.
+## كيفية الاستدعاء من العميل (Client)
 
-ملاحظات أمان:
+يمكنك استيراد الـ Server Action مباشرة داخل مكونات العميل (`"use client"`) واستدعاءه كدالة عادية.
 
-- ضع أي كود يعتمد على `SUPABASE_SERVICE_ROLE_KEY` داخل `.server.ts` أو داخل الـ handler فقط.
-- تجنّب وضع مفاتيح سرية في ملفات تُشحن للعميل.
+```tsx
+"use client";
 
-## نمط الرد والأخطاء
+import { useState } from "react";
+import { updateUserStatus } from "@/app/actions/users";
+import { toast } from "sonner";
 
-- عندما يرمي الـ handler خطأً، يتم تمرير خطأ HTTP مناسب إلى العميل — يمكنك معالجته عبر `try/catch` على جهة العميل.
-- استخدم `zod` للتحقق من المدخلات لتقليل أخطاء التحقق على الخادم.
+export function UserButton({ userId }: { userId: string }) {
+  const [loading, setLoading] = useState(false);
 
-## تسجيل ونقاط نهاية HTTP التقليدية
+  const handleUpdate = async () => {
+    setLoading(true);
+    try {
+      // استدعاء مباشر لـ Server Action
+      await updateUserStatus(userId, true);
+      toast.success("تم التحديث بنجاح!");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-التطبيق يعتمد بشكل أساسي على server functions بدلاً من بناء REST endpoints يدوياً. إن احتجت لواجهة REST/HTTP تقليدية، أضف handler في `src/server.ts` أو أنشئ وظائف edge مخصصة ودوّنها هنا.
+  return <button onClick={handleUpdate} disabled={loading}>تفعيل المستخدم</button>;
+}
+```
 
----
+## المصادقة والصلاحيات (Authentication & RBAC)
 
-إذا رغبت، أستطيع:
+لأن Server Actions تعمل على الخادم، يمكنك -ويجب عليك- التحقق من جلسة المستخدم قبل تنفيذ أي عملية خطيرة.
+يمكنك استخدام عميل Supabase الخاص بالخادم (`createServerClient`) لقراءة الجلسة بشكل آمن عبر ملفات الكوكيز:
 
-- توليد جدول تلقائي في هذا الملف لكل server function موجود (حصر جميع `createServerFn`).
-- إضافة أمثلة استدعاء TypeScript مفصّلة لكل دالة.
+```ts
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+
+export async function doSomethingSecure() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("غير مصرح لك بالقيام بهذه العملية");
+  }
+
+  // تنفيذ الكود...
+}
+```
+
+## ملاحظات أمنية هامة ⚠️
+
+- لا تمرر أبداً أية مفاتيح سرية كمدخلات (Arguments) إلى الـ Server Actions من العميل.
+- الـ Server Actions مكشوفة برمجياً للعميل كنقاط نهاية مخفية (Hidden endpoints)؛ لذلك يجب عليك دائماً التحقق من المصادقة (Auth) بداخل الدالة نفسها حتى لو كان زر الاستدعاء مخفياً في الواجهة.
+- للعمليات الإدارية التي تتخطى الـ RLS (مثل ترقية مستخدم أو حذفه نهائياً)، استخدم حصراً `supabaseAdmin`، ولكن تأكد أن المستدعي (المستخدم) لديه صلاحية المسؤول.
+
+## نقاط نهاية HTTP التقليدية (Route Handlers)
+
+إذا كنت بحاجة ماسة لواجهة برمجة (API) ليتم استدعاؤها من تطبيقات أخرى أو خدمات خارجية (مثلاً Webhooks)، فيمكنك إنشاؤها عبر Route Handlers في Next.js:
+مثال: إضافة ملف `src/app/api/webhook/route.ts`:
+
+```ts
+import { NextResponse } from 'next/server';
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  // ... processing
+  return NextResponse.json({ success: true });
+}
+```
