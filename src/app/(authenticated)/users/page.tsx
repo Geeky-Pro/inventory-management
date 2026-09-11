@@ -138,13 +138,13 @@ export default function UsersPage() {
         rows={profiles}
         columns={[
           { key: "u", header: t("username"), cell: (r: ProfileRow) => r.username },
-          { key: "n", header: t("full_name"), cell: (r: any) => r.full_name ?? "-" },
-          { key: "a", header: t("is_active"), cell: (r: any) => (r.is_active ? "✓" : "✗") },
+          { key: "n", header: t("full_name"), cell: (r: ProfileRow) => r.full_name ?? "-" },
+          { key: "a", header: t("is_active"), cell: (r: ProfileRow) => (r.is_active ? "✓" : "✗") },
           {
             key: "g",
             header: t("role_group"),
-            cell: (r: any) =>
-              (userGroups as any[])
+            cell: (r: ProfileRow) =>
+              userGroups
                 .filter((g) => g.user_id === r.id)
                 .map((g) => groupNames.get(g.group_id) ?? g.group_id)
                 .join(", ") || "-",
@@ -152,7 +152,7 @@ export default function UsersPage() {
           {
             key: "effective_permissions",
             header: t("effective_permissions"),
-            cell: (r: any) => {
+            cell: (r: ProfileRow) => {
               const entry = effectivePermissionsByUser.get(r.id);
               if (!entry || !entry.effective.length) return "-";
               return (
@@ -177,7 +177,7 @@ export default function UsersPage() {
           {
             key: "act",
             header: t("actions"),
-            cell: (r: any) => (
+            cell: (r: ProfileRow) => (
               <div className="flex items-center gap-2">
                 {can("users.manage") && (
                   <>
@@ -216,8 +216,8 @@ export default function UsersPage() {
                         try {
                           await adminResetPassword({ data: { userId: r.id } });
                           toast.success(t("reset_email_sent"));
-                        } catch (err: any) {
-                          toast.error(err?.message || String(err));
+                        } catch (err: unknown) {
+                          toast.error(err instanceof Error ? err.message : String(err));
                         }
                       }}
                     >
@@ -228,10 +228,10 @@ export default function UsersPage() {
                 {can("permissions.manage") && (
                   <PermDialog
                     profile={r}
-                    permissions={permissions as any[]}
-                    groups={groups as any[]}
-                    userGroups={userGroups as any[]}
-                    userPerms={userPerms as any[]}
+                    permissions={permissions}
+                    groups={groups}
+                    userGroups={userGroups}
+                    userPerms={userPerms}
                     onDone={refetch}
                     locale={locale}
                   />
@@ -255,11 +255,11 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
   useEffect(() => {
     if (!open) return;
     setSelectedGroups(
-      new Set((userGroups as any[]).filter((g) => g.user_id === profile.id).map((g) => g.group_id)),
+      new Set(userGroups.filter((g) => g.user_id === profile.id).map((g) => g.group_id)),
     );
     setSelectedPerms(
       new Set(
-        (userPerms as any[]).filter((p) => p.user_id === profile.id).map((p) => p.permission_key),
+        userPerms.filter((p) => p.user_id === profile.id).map((p) => p.permission_key),
       ),
     );
   }, [open, profile.id, userGroups, userPerms]);
@@ -267,10 +267,10 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
   const save = async () => {
     // Compute diffs instead of wiping all rows: safer for partial failures.
     const existingGroupIds = new Set(
-      (userGroups as any[]).filter((g) => g.user_id === profile.id).map((g) => g.group_id),
+      userGroups.filter((g) => g.user_id === profile.id).map((g) => g.group_id),
     );
     const existingPermKeys = new Set(
-      (userPerms as any[]).filter((p) => p.user_id === profile.id).map((p) => p.permission_key),
+      userPerms.filter((p) => p.user_id === profile.id).map((p) => p.permission_key),
     );
 
     const groupsToInsert = Array.from(selectedGroups).filter((g) => !existingGroupIds.has(g));
@@ -463,8 +463,8 @@ function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
       }
       setOpen(false);
       onDone?.();
-    } catch (err: any) {
-      toast.error(err?.message || String(err));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -486,11 +486,11 @@ function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
           </div>
           <div>
             <Label>{t("full_name")}</Label>
-            <Input value={fullName} onChange={(e: any) => setFullName(e.target.value)} />
+            <Input value={fullName} onChange={(e: ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)} />
           </div>
           <div>
             <Label>{t("email")}</Label>
-            <Input value={email} onChange={(e: any) => setEmail(e.target.value)} />
+            <Input value={email} onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} />
           </div>
           {!isEdit && (
             <div>
@@ -498,7 +498,7 @@ function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
               <Input
                 type="password"
                 value={password}
-                onChange={(e: any) => setPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
               />
             </div>
