@@ -116,3 +116,22 @@ The application invoice editor currently performs an invoice UPDATE, then delete
 The live stock_movements table currently contains 4 rows at audit time; no destructive data migration was performed during this trace.
 
 Decision: do not patch this with another trigger. Phase 2 should first introduce an explicit atomic purchase-posting/voiding transaction and then retire direct line-level stock side effects. The purchase editor must not be allowed to use delete/reinsert as a way to alter posted inventory.
+
+## Phase 2 implementation checkpoint — 2026-09-11
+
+Implemented the first purchase-lifecycle foundation in Supabase:
+
+- Added `purchase_invoices.status` with only `posted` and `voided`; existing invoices default to `posted`.
+- Added `voided_at` and `voided_by`.
+- Added positive/non-negative checks for purchase quantities and monetary line values.
+- Added `purchase_void` as a stock movement type.
+- Removed the legacy invoice-line DELETE stock trigger.
+- Added immutability enforcement for posted/voided invoices and all invoice lines.
+- Added `void_purchase_invoice(uuid)`, which locks the invoice, checks the authenticated session permission, inserts reversal stock movements atomically, marks the invoice voided, and recomputes latest purchase price for affected items.
+- Verified the migration applied successfully and the authenticated role can execute the void function.
+
+Migrations:
+- `20260911164500_purchase_lifecycle_immutable_posted.sql`
+- `20260911165000_fix_purchase_immutability_trigger.sql`
+
+Important: the application invoice editor still needs to be migrated to the new server-side/transactional workflow before users should edit existing invoices. The database now correctly rejects the old delete/reinsert editing behavior instead of silently mutating stock.
