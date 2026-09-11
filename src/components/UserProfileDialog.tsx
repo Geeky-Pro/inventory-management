@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * UserProfileDialog
  * ─────────────────
@@ -10,8 +12,8 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser, usePermissions } from "@/lib/permissions";
+import { createClient } from "@/lib/supabase/client";
+import { useCurrentUser, usePermissions } from "@/lib/next/permissions";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -38,6 +40,7 @@ import {
 } from "lucide-react";
 
 const AVATAR_BUCKET = "avatars";
+const supabase = createClient();
 
 function getAvatarUrl(userId: string, bust?: number) {
   const { data } = supabase.storage
