@@ -44,3 +44,8 @@ full_backup.sql
 .agents/*
 .claude/*
 skills-lock.json
+
+# Environment files
+.env
+.env.*
+!.env.example
