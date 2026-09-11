@@ -82,7 +82,7 @@ Scope is intentionally limited to supplier statements/balances; no full accounti
 - [ ] Integrate purchase void reversal.
 - [x] Opening supplier balances.
 - [x] Supplier payments (payment method only; no cash/bank ledger).
-- [ ] Supplier statement/read model.
+- [x] Supplier statement/read model.
 - [ ] Idempotency/concurrency safeguards.
 - [ ] Integration tests and reconciliation.
 
@@ -206,3 +206,10 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Applied `20260911195500_supplier_opening_balance_and_payments.sql` successfully.
 - [ ] Supplier statement/read model.
 - [ ] Integration/reconciliation tests.
+
+### 2026-09-11 — Supplier Statement Read Model
+- [x] Added `supplier_statement` view with deterministic running balance ordering (`transaction_date`, `created_at`, `id`).
+- [x] Added supporting statement-order index.
+- [x] Applied `20260911200500_supplier_statement_read_model.sql` successfully.
+- [x] Verified the read model is queryable against the live database; no business data was created.
+- [ ] Reconciliation and integration/concurrency tests remain before Phase 3 closure.
