@@ -18,11 +18,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { useI18n } from "@/lib/i18n";
-import { buildEffectivePermissions, usePermissions, userHasAnyPermission } from "@/lib/next/permissions";
+import { buildEffectivePermissions, usePermissions } from "@/lib/next/permissions";
 import { ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { createUser, updateUser, deleteUser, adminResetPassword } from "../../actions/users";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+type PermissionRow = Database["public"]["Tables"]["permissions"]["Row"];
+type PermissionGroupRow = Database["public"]["Tables"]["permission_groups"]["Row"];
+type UserPermissionGroupRow = Database["public"]["Tables"]["user_permission_groups"]["Row"];
+type UserPermissionRow = Database["public"]["Tables"]["user_permissions"]["Row"];
+type PermissionGroupItemRow = Database["public"]["Tables"]["permission_group_items"]["Row"];
+
+type UserDialogProps = {
+  profile?: ProfileRow;
+  trigger?: ReactNode;
+  onDone: () => void;
+};
+
+type PermDialogProps = {
+  profile: ProfileRow;
+  permissions: PermissionRow[];
+  groups: PermissionGroupRow[];
+  userGroups: UserPermissionGroupRow[];
+  userPerms: UserPermissionRow[];
+  onDone: () => void;
+  locale: string;
+};
 
 export default function UsersPage() {
   const { t, locale } = useI18n();
@@ -60,13 +84,13 @@ export default function UsersPage() {
   const permissionLabels = useMemo(
     () =>
       new Map(
-        (permissions as any[]).map((p) => [p.key, locale === "ar" ? p.label_ar : p.label_en]),
+        permissions.map((p) => [p.key, locale === "ar" ? p.label_ar : p.label_en]),
       ),
     [permissions, locale],
   );
 
   const groupNames = useMemo(
-    () => new Map((groups as any[]).map((g) => [g.id, g.name])),
+    () => new Map(groups.map((g) => [g.id, g.name])),
     [groups],
   );
 
@@ -75,17 +99,17 @@ export default function UsersPage() {
     const directMap = new Map<string, string[]>();
     const groupMap = new Map<string, string[]>();
 
-    (userPerms as any[]).forEach((perm) => {
+    userPerms.forEach((perm) => {
       directMap.set(perm.user_id, [...(directMap.get(perm.user_id) ?? []), perm.permission_key]);
     });
-    (userGroups as any[]).forEach((link) => {
+    userGroups.forEach((link) => {
       groupMap.set(link.user_id, [...(groupMap.get(link.user_id) ?? []), link.group_id]);
     });
 
-    (profiles as any[]).forEach((profile) => {
+    profiles.forEach((profile) => {
       const direct = Array.from(new Set(directMap.get(profile.id) ?? []));
       const groupIds = groupMap.get(profile.id) ?? [];
-      const effective = buildEffectivePermissions(direct, groupIds, permissionGroupItems as any[]);
+      const effective = buildEffectivePermissions(direct, groupIds, permissionGroupItems);
       const inherited = effective.filter((key) => !direct.includes(key));
       result.set(profile.id, { direct, inherited, effective });
     });
@@ -111,9 +135,9 @@ export default function UsersPage() {
         )}
       </PageHeader>
       <DataTable
-        rows={profiles as any[]}
+        rows={profiles}
         columns={[
-          { key: "u", header: t("username"), cell: (r: any) => r.username },
+          { key: "u", header: t("username"), cell: (r: ProfileRow) => r.username },
           { key: "n", header: t("full_name"), cell: (r: any) => r.full_name ?? "-" },
           { key: "a", header: t("is_active"), cell: (r: any) => (r.is_active ? "✓" : "✗") },
           {
@@ -180,8 +204,8 @@ export default function UsersPage() {
                           });
                           toast.success(t("delete_success"));
                           refetch();
-                        } catch (err: any) {
-                          toast.error(err?.message || String(err));
+                        } catch (err: unknown) {
+                          toast.error(err instanceof Error ? err.message : String(err));
                         }
                       }}
                     />
@@ -221,7 +245,7 @@ export default function UsersPage() {
   );
 }
 
-function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDone, locale }: any) {
+function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDone, locale }: PermDialogProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
@@ -250,10 +274,10 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
     );
 
     const groupsToInsert = Array.from(selectedGroups).filter((g) => !existingGroupIds.has(g));
-    const groupsToDelete = Array.from(existingGroupIds).filter((g: any) => !selectedGroups.has(g));
+    const groupsToDelete = Array.from(existingGroupIds).filter((g) => !selectedGroups.has(g));
 
     const permsToInsert = Array.from(selectedPerms).filter((p) => !existingPermKeys.has(p));
-    const permsToDelete = Array.from(existingPermKeys).filter((p: any) => !selectedPerms.has(p));
+    const permsToDelete = Array.from(existingPermKeys).filter((p) => !selectedPerms.has(p));
 
     // Execute deletions first (idempotent), then inserts. Handle errors explicitly.
     if (groupsToDelete.length) {
@@ -317,11 +341,11 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
 
   const toggle = (set: Set<string>, setSet: (s: Set<string>) => void, key: string) => {
     const n = new Set(set);
-    n.has(key) ? n.delete(key) : n.add(key);
+    if (n.has(key)) n.delete(key); else n.add(key);
     setSet(n);
   };
 
-  const cats: Record<string, any[]> = {};
+  const cats: Record<string, PermissionRow[]> = {};
   for (const p of permissions) (cats[p.category] ??= []).push(p);
 
   return (
@@ -341,7 +365,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
           <div>
             <h3 className="font-semibold mb-2">{t("permission_groups")}</h3>
             <div className="flex flex-wrap gap-3">
-              {groups.map((g: any) => (
+              {groups.map((g) => (
                 <label
                   key={g.id}
                   className="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer"
@@ -361,7 +385,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
               <div key={cat} className="mb-3">
                 <div className="text-sm text-muted-foreground mb-1">{cat}</div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {perms.map((p: any) => (
+                  {perms.map((p) => (
                     <label key={p.key} className="flex items-center gap-2 cursor-pointer">
                       <Checkbox
                         checked={selectedPerms.has(p.key)}
@@ -386,7 +410,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
   );
 }
 
-function UserDialog({ profile, trigger, onDone }: any) {
+function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
   const isEdit = !!profile;
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -458,7 +482,7 @@ function UserDialog({ profile, trigger, onDone }: any) {
         <div className="space-y-4">
           <div>
             <Label>{t("username")}</Label>
-            <Input value={username} onChange={(e: any) => setUsername(e.target.value)} required />
+            <Input value={username} onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)} required />
           </div>
           <div>
             <Label>{t("full_name")}</Label>
