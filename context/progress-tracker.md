@@ -130,6 +130,12 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 
 ## Change Log
 
+### 2026-09-11 — Inventory Mutation Trace
+- Confirmed live triggers: purchase line INSERT -> stock movement; purchase line DELETE -> stock reversal; no purchase-line UPDATE stock trigger.
+- Confirmed the invoice editor deletes and reinserts lines during edit, which fires those triggers and can mutate stock unintentionally.
+- No data was changed during this trace; live `stock_movements` count observed: 4.
+- Decision: replace line-level stock side effects with explicit atomic purchase posting/voiding in Phase 2.
+
 ### 2026-09-11 — Technical Architecture Audit
 - Audited the live schema, relationships, RLS model, functions/triggers, indexes, migrations, and application data-access patterns.
 - Identified P0 inventory integrity risks around competing item_stock/stock_movements paths and invoice-item update behavior.
