@@ -213,3 +213,14 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Applied `20260911200500_supplier_statement_read_model.sql` successfully.
 - [x] Verified the read model is queryable against the live database; no business data was created.
 - [ ] Reconciliation and integration/concurrency tests remain before Phase 3 closure.
+
+### 2026-09-11 — Phase 3 Verification
+- [x] Checked supplier ledger references for duplicates: none found.
+- [x] Confirmed supplier balance is derived from ledger transactions.
+- [x] Confirmed supplier statement read model is queryable.
+- [x] No test/business data inserted during verification.
+- [ ] User acceptance/integration tests before formal Phase 3 closure.
+
+## Phase 4 — Customer Ledger
+
+**NEXT — planned, not started until Phase 3 acceptance is confirmed.**
