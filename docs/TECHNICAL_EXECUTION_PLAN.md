@@ -153,3 +153,13 @@ Remaining before calling purchasing safe: replace the old invoice CREATE path (c
 - Applied `20260911173000_inventory_item_serialization.sql` successfully.
 - Important scope note: purchases are positive movements, so this step does not by itself implement the complete no-negative-stock invariant for outbound/adjustment movements. Every future negative-stock movement must use the same item lock and check before INSERT.
 - No test purchase or void was created against live business data during this checkpoint.
+
+## Phase 2 inventory mutation boundary — 2026-09-11
+
+- Added `adjust_stock(...)` as the controlled stock-adjustment mutation: authenticated, `items.manage` authorized, per-item transaction lock, negative-result rejection, and idempotency by operation UUID.
+- Added `src/app/actions/inventory.ts` as the Server Action boundary for adjustments.
+- Stock ledger remains append-only from the application perspective; direct client writes are not part of the supported mutation path.
+- Verified `adjust_stock` exists as `SECURITY DEFINER` with `authenticated` EXECUTE permission and the database remains RLS-enabled for `stock_movements`.
+- No live adjustment was created.
+
+Next: audit every remaining stock-changing trigger/function and consolidate opening-balance handling, then add isolated integration/concurrency tests before declaring Phase 2 complete.
