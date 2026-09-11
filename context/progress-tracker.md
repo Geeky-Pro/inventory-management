@@ -293,4 +293,5 @@ Planned first pass:
 - [x] Repository-wide legacy reference scan completed; no active references remain to the retired clients/permissions or test routes.
 - [x] Removed temporary `scripts/test-create-user.mjs` containing hardcoded test credentials; no package script or source reference depended on it.
 - [x] Removed skipped placeholder `tests/integration/users.test.ts`; integration coverage should be added as real tests when implemented.
-- [ ] Run full lint/build and perform final compile/runtime verification before declaring cleanup complete.
+- [x] GitHub CI/status check: no workflow runs or status checks are configured for the cleanup commit, so remote CI cannot be used as validation.
+- [ ] Run local lint/build/test suite in the development environment before declaring cleanup complete.
