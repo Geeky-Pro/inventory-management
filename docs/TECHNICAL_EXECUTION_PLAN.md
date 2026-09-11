@@ -135,3 +135,13 @@ Migrations:
 - `20260911165000_fix_purchase_immutability_trigger.sql`
 
 Important: the application invoice editor still needs to be migrated to the new server-side/transactional workflow before users should edit existing invoices. The database now correctly rejects the old delete/reinsert editing behavior instead of silently mutating stock.
+
+## Phase 2 application checkpoint — 2026-09-11
+
+- Added `src/app/actions/purchases.ts` with authenticated `voidPurchase()` Server Action; it delegates the mutation to the DB transaction and does not accept an actor ID.
+- Updated the invoices UI so posted invoices no longer expose the old edit/delete workflow; the destructive action is now a localized Void action.
+- Added `ConfirmAction` for non-delete destructive confirmations and added Arabic/English void translations.
+- Hardened the DB lifecycle further: direct posted-invoice DELETE is blocked, direct posted->voided UPDATE is blocked unless it occurs inside `void_purchase_invoice()`, and invoice-line DELETE/UPDATE remains blocked.
+- Applied `20260911170500_harden_purchase_void_transition.sql` and `20260911171000_block_purchase_invoice_delete.sql` successfully.
+
+Remaining before calling purchasing safe: replace the old invoice CREATE path (client-side invoice + line inserts) with a single authenticated Server Action/transaction, then implement and test the no-negative-stock invariant and exactly-once posting behavior.
