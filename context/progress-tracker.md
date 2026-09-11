@@ -185,3 +185,10 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Applied `20260911173000_inventory_item_serialization.sql` successfully.
 - Full no-negative-stock invariant remains to be implemented for outbound/adjustment movements using the same serialization mechanism.
 - No live business data was created/voided during this checkpoint.
+
+### 2026-09-11 — Safe Stock Adjustment Boundary
+- Added atomic `adjust_stock()` DB operation with session-bound authorization, per-item serialization, negative-stock rejection, and operation-id idempotency.
+- Added `src/app/actions/inventory.ts` Server Action.
+- Verified function existence, authenticated EXECUTE privilege, and RLS on `stock_movements`.
+- No live adjustment data created.
+- Next: audit all remaining stock-changing paths and implement isolated integration/concurrency tests.
