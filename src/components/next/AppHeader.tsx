@@ -15,7 +15,7 @@ export function AppHeader() {
   const supabase = createClient();
 
   return (
-    <header className="min-h-14 flex flex-wrap items-center gap-2 border-b px-2 py-2 bg-card sm:px-3">
+    <header className="sticky top-0 z-30 min-h-[4rem] flex flex-wrap items-center gap-3 border-b border-border/40 px-4 py-2 bg-background/80 backdrop-blur-md shadow-sm transition-all">
       <SidebarTrigger className="shrink-0" />
       <div className="flex-1 min-w-0" />
       <span className="hidden max-w-[10rem] truncate text-sm text-muted-foreground sm:inline">

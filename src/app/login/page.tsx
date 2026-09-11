@@ -33,7 +33,7 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    
+
     if (error) {
       if (/email not confirmed/i.test(error.message)) {
         toast.error(t("email_not_confirmed"));
@@ -42,7 +42,7 @@ export default function LoginPage() {
       toast.error(error.message || t("login_failed"));
       return;
     }
-    
+
     // Login successful, redirect to dashboard and refresh the router
     // to ensure layout fetches the new user session
     router.push("/dashboard");
@@ -80,11 +80,6 @@ export default function LoginPage() {
             {t("sign_in")}
           </Button>
         </form>
-        <div className="mt-4 text-center text-xs text-muted-foreground">
-          <Link href="/signup" className="underline">
-            {t("create_first_admin")}
-          </Link>
-        </div>
       </Card>
     </div>
   );

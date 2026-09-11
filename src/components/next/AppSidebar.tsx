@@ -45,40 +45,7 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
   }, [ref, handler]);
 }
 
-// ─── context: share open state ────────────────────────────────────────────────
-import { createContext, useContext } from "react";
-
-type SidebarCtx = {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-};
-const SidebarContext = createContext<SidebarCtx>({ open: false, setOpen: () => {} });
-export function useSidebarState() {
-  return useContext(SidebarContext);
-}
-
-export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <SidebarContext.Provider value={{ open, setOpen }}>
-      {children}
-    </SidebarContext.Provider>
-  );
-}
-
-// ─── Trigger button (used in AppHeader) ──────────────────────────────────────
-export function SidebarToggleButton() {
-  const { open, setOpen } = useSidebarState();
-  return (
-    <button
-      onClick={() => setOpen(!open)}
-      className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-      aria-label="Toggle sidebar"
-    >
-      <Menu className="h-5 w-5" />
-    </button>
-  );
-}
+import { useSidebar } from "@/components/ui/sidebar";
 
 // ─── Nav items config ─────────────────────────────────────────────────────────
 function useNavItems() {
@@ -108,8 +75,11 @@ function useNavItems() {
 
 // ─── AppSidebar ───────────────────────────────────────────────────────────────
 export function AppSidebar() {
-  const { open, setOpen } = useSidebarState();
+  const { open: desktopOpen, setOpen: setDesktopOpen, openMobile, setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
+  
+  const isOpen = isMobile ? openMobile : desktopOpen;
+  const setIsOpen = isMobile ? setOpenMobile : setDesktopOpen;
   const { t, dir } = useI18n();
   const { data: user } = useCurrentUser();
   const pathname = usePathname();
@@ -123,23 +93,23 @@ export function AppSidebar() {
     router.push("/login");
   };
 
-  // إغلاق عند الضغط خارج السايدبار (موبايل)
+  // إغلاق عند الضغط خارج السايدبار (موبايل وسطح المكتب)
   useClickOutside(drawerRef, () => {
-    if (isMobile && open) setOpen(false);
+    if (isOpen) setIsOpen(false);
   });
 
   // إغلاق تلقائي عند تغير الصفحة
   useEffect(() => {
-    if (isMobile) setOpen(false);
+    if (isOpen) setIsOpen(false);
   }, [pathname]);
 
   // منع scroll الصفحة عند فتح السايدبار على الموبايل
   useEffect(() => {
     if (isMobile) {
-      document.body.style.overflow = open ? "hidden" : "";
+      document.body.style.overflow = isOpen ? "hidden" : "";
     }
     return () => { document.body.style.overflow = ""; };
-  }, [open, isMobile]);
+  }, [isOpen, isMobile]);
 
   const isRtl = dir === "rtl";
 
@@ -150,7 +120,7 @@ export function AppSidebar() {
         <div
           className={cn(
             "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300",
-            open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+            isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           )}
           aria-hidden
         />
@@ -162,18 +132,16 @@ export function AppSidebar() {
         className={cn(
           // أساسيات
           "fixed z-50 top-0 bottom-0 flex flex-col",
-          "w-72 bg-card border-border shadow-xl",
+          "w-72 bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl",
           "transition-transform duration-300 ease-in-out",
           // اتجاه RTL/LTR
           isRtl ? "right-0 border-l" : "left-0 border-r",
-          // desktop: دائم ظاهر
-          !isMobile && "md:translate-x-0",
           // desktop مخفي = مزاح للخارج
-          !isMobile && !open && (isRtl ? "translate-x-full" : "-translate-x-full"),
-          !isMobile && open && "translate-x-0",
+          !isMobile && !isOpen && (isRtl ? "translate-x-full" : "-translate-x-full"),
+          !isMobile && isOpen && "translate-x-0",
           // موبايل
-          isMobile && !open && (isRtl ? "translate-x-full" : "-translate-x-full"),
-          isMobile && open && "translate-x-0",
+          isMobile && !isOpen && (isRtl ? "translate-x-full" : "-translate-x-full"),
+          isMobile && isOpen && "translate-x-0",
         )}
       >
         {/* Header السايدبار */}
@@ -190,7 +158,7 @@ export function AppSidebar() {
           {/* زر الإغلاق — موبايل */}
           {isMobile && (
             <button
-              onClick={() => setOpen(false)}
+              onClick={() => setIsOpen(false)}
               className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
@@ -201,7 +169,7 @@ export function AppSidebar() {
         {/* معلومات المستخدم — قابل للضغط لفتح البروفايل */}
         <div className="px-3 py-2 border-b border-border shrink-0">
           <button
-            onClick={() => { router.push("/profile"); setOpen(false); }}
+            onClick={() => { router.push("/profile"); setIsOpen(false); }}
             className="w-full flex items-center gap-3 rounded-lg px-2 py-2 text-start hover:bg-accent transition-colors group"
           >
             <UserAvatar
@@ -231,10 +199,10 @@ export function AppSidebar() {
                 key={item.to}
                 href={item.to}
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 interactive-hover",
                   active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
                 )}
               >
                 <item.icon
@@ -278,7 +246,7 @@ export function AppSidebar() {
         <div
           className={cn(
             "shrink-0 transition-all duration-300",
-            open ? "w-72" : "w-0",
+            isOpen ? "w-72" : "w-0",
           )}
         />
       )}
