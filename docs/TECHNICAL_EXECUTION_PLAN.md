@@ -145,3 +145,11 @@ Important: the application invoice editor still needs to be migrated to the new 
 - Applied `20260911170500_harden_purchase_void_transition.sql` and `20260911171000_block_purchase_invoice_delete.sql` successfully.
 
 Remaining before calling purchasing safe: replace the old invoice CREATE path (client-side invoice + line inserts) with a single authenticated Server Action/transaction, then implement and test the no-negative-stock invariant and exactly-once posting behavior.
+
+## Phase 2 inventory serialization checkpoint — 2026-09-11
+
+- Hardened `on_invoice_item_change()` to require a posted invoice and positive quantity/conversion, and added a transaction-scoped advisory lock per item before creating the purchase movement.
+- Hardened `void_purchase_invoice()` to lock the invoice and every affected item, validate that reversal will not produce negative stock, and use the same per-item serialization key.
+- Applied `20260911173000_inventory_item_serialization.sql` successfully.
+- Important scope note: purchases are positive movements, so this step does not by itself implement the complete no-negative-stock invariant for outbound/adjustment movements. Every future negative-stock movement must use the same item lock and check before INSERT.
+- No test purchase or void was created against live business data during this checkpoint.
