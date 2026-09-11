@@ -290,4 +290,7 @@ Planned first pass:
 - [x] Refreshed generated src/integrations/supabase/types.ts from the live Supabase schema; it now includes customer ledger columns, views, and RPCs.
 - [x] Removed duplicate standalone scripts/test-create-user.js; retained the ESM .mjs version.
 - [x] Updated stale Supabase architecture documentation to point to the current lib/supabase/* clients.
-- [ ] Run full lint/build and perform a final repository-wide unused-symbol scan before declaring cleanup complete.
+- [x] Repository-wide legacy reference scan completed; no active references remain to the retired clients/permissions or test routes.
+- [x] Removed temporary `scripts/test-create-user.mjs` containing hardcoded test credentials; no package script or source reference depended on it.
+- [x] Removed skipped placeholder `tests/integration/users.test.ts`; integration coverage should be added as real tests when implemented.
+- [ ] Run full lint/build and perform final compile/runtime verification before declaring cleanup complete.
