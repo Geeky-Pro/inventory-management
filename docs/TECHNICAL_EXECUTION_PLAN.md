@@ -163,3 +163,13 @@ Remaining before calling purchasing safe: replace the old invoice CREATE path (c
 - No live adjustment was created.
 
 Next: audit every remaining stock-changing trigger/function and consolidate opening-balance handling, then add isolated integration/concurrency tests before declaring Phase 2 complete.
+
+## Final Phase 2 audit checkpoint — 2026-09-11
+
+- Audited repository references and database triggers around `stock_movements`.
+- Confirmed purchase item stock creation is trigger-driven and purchase/void lifecycle guards are active.
+- Found and fixed a privilege-layer issue: an older migration had table-level INSERT/DELETE grants that survived policy removal. Migration `20260911180500_revoke_direct_stock_ledger_writes.sql` now revokes all direct mutation privileges from `anon`/`authenticated` and leaves authenticated SELECT only.
+- Verified final table privileges: anonymous INSERT = false; authenticated INSERT/UPDATE/DELETE = false; authenticated SELECT = true.
+- No live stock adjustment or purchase was created during this audit.
+
+Phase 2 is now ready for isolated integration/concurrency testing. Do not add new inventory mutation paths without routing them through a transaction boundary with the same item serialization invariant.
