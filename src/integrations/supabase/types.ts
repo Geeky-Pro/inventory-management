@@ -376,6 +376,102 @@ export type Database = {
           },
         ];
       };
+      item_images: {
+        Row: {
+          id: string;
+          item_id: string;
+          image_url: string;
+          storage_path?: string;
+          is_primary: boolean;
+          sort_order?: number;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          item_id: string;
+          image_url: string;
+          storage_path?: string;
+          is_primary?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          item_id?: string;
+          image_url?: string;
+          storage_path?: string;
+          is_primary?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_images_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "item_images_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      item_units: {
+        Row: {
+          id: string;
+          item_id: string;
+          unit_id: string;
+          conversion_factor: number;
+          is_base_unit: boolean;
+          is_purchase_default: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_id: string;
+          unit_id: string;
+          conversion_factor: number;
+          is_base_unit?: boolean;
+          is_purchase_default?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          item_id?: string;
+          unit_id?: string;
+          conversion_factor?: number;
+          is_base_unit?: boolean;
+          is_purchase_default?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_units_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "item_units_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       permission_group_items: {
         Row: {
           group_id: string;
@@ -455,6 +551,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           locale: string;
+          avatar_url: string | null;
           updated_at: string;
           username: string;
         };
@@ -464,6 +561,7 @@ export type Database = {
           id: string;
           is_active?: boolean;
           locale?: string;
+          avatar_url?: string | null;
           updated_at?: string;
           username: string;
         };
@@ -473,6 +571,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           locale?: string;
+          avatar_url?: string | null;
           updated_at?: string;
           username?: string;
         };
@@ -484,6 +583,8 @@ export type Database = {
           id: string;
           invoice_id: string;
           item_id: string;
+          item_unit_id: string | null;
+          conversion_factor: number;
           line_total_local: number;
           price_foreign: number | null;
           price_local: number;
@@ -494,6 +595,8 @@ export type Database = {
           id?: string;
           invoice_id: string;
           item_id: string;
+          item_unit_id?: string | null;
+          conversion_factor?: number;
           line_total_local: number;
           price_foreign?: number | null;
           price_local: number;
@@ -504,6 +607,8 @@ export type Database = {
           id?: string;
           invoice_id?: string;
           item_id?: string;
+          item_unit_id?: string | null;
+          conversion_factor?: number;
           line_total_local?: number;
           price_foreign?: number | null;
           price_local?: number;

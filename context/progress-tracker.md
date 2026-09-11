@@ -64,10 +64,10 @@ Branch: `migration/nextjs`.
 
 ### Phase 4 details
 
-  - [x] Group 1 (Static/Simple Data): `/profile`, `/settings`, `/units`, `/categories`
-  - [x] Group 2 (Tables): `/items`, `/suppliers`, `/customers`
-  - [x] Group 3 (Interactive): `/dashboard`, `/invoices`, `/movements`, `/debts`
-  - [x] Group 4 (Admin): `/users`, `/permission-groups`, `/audit-logs`, `/reports` (Ready for verification)
+- [x] Group 1 (Static/Simple Data): `/profile`, `/settings`, `/units`, `/categories`
+- [x] Group 2 (Tables): `/items`, `/suppliers`, `/customers`
+- [x] Group 3 (Interactive): `/dashboard`, `/invoices`, `/movements`, `/debts`
+- [x] Group 4 (Admin): `/users`, `/permission-groups`, `/audit-logs`, `/reports` (Ready for verification)
 
 ### Phase 1 details
 

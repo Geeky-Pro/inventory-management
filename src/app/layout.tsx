@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { Providers } from './providers'
-import '../src/styles.css'
+import '../styles.css'
 
 export const metadata: Metadata = {
   title: 'Inventory Management',

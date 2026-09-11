@@ -42,7 +42,7 @@ interface ItemUnit {
   conversion_factor: number;
   is_base_unit: boolean;
   is_purchase_default: boolean;
-  last_purchase_price_local: number;
+  last_purchase_price_local?: number;
 }
 
 // ─── Main Dialog ──────────────────────────────────────────────────────────────
@@ -173,8 +173,8 @@ export function ItemUnitsDialog({
                       : `1 ${unitName(iu.unit_id)} = ${fmtNum(iu.conversion_factor, 4)} ${unitName(
                           (itemUnits as ItemUnit[]).find((x) => x.is_base_unit)?.unit_id ?? "",
                         )}`}
-                    {iu.last_purchase_price_local > 0 &&
-                      ` · ${t("last_price")}: ${fmtNum(iu.last_purchase_price_local, 2)}`}
+                    {(iu.last_purchase_price_local || 0) > 0 &&
+                      ` · ${t("last_price")}: ${fmtNum(iu.last_purchase_price_local || 0, 2)}`}
                   </p>
                 </div>
 

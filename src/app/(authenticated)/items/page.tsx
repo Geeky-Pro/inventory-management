@@ -213,7 +213,7 @@ export default function ItemsPage() {
                   {bigUnit && qty >= bigUnit.conversion_factor && (
                     <span className="text-muted-foreground text-xs ms-1">
                       ({fmtNum(Math.floor(qty / bigUnit.conversion_factor), 0)} {unitName(bigUnit.unit_id)}{" "}
-                      {fmtNum(qty % bigUnit.conversion_factor, 2) > 0 ? `+ ${fmtNum(qty % bigUnit.conversion_factor, 2)}` : ""})
+                      {(qty % bigUnit.conversion_factor) > 0 ? `+ ${fmtNum(qty % bigUnit.conversion_factor, 2)}` : ""})
                     </span>
                   )}
                 </div>
@@ -323,9 +323,12 @@ function ItemImagesDialog({ item, canManage }: { item: any; canManage: boolean }
           continue;
         }
 
+        const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path);
+
         const { error: dbErr } = await supabase.from("item_images").insert({
           item_id: item.id,
           storage_path: path,
+          image_url: publicUrl,
           is_primary: isFirst && i === 0,
           sort_order: (images as any[]).length + i,
           created_by: u.user?.id,
