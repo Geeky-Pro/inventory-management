@@ -1,12 +1,12 @@
 # Environment Variables
 
-يستخدم المشروع متغيرات بيئة للعميل والخادم. بعض المتغيرات تُحقن في جانب العميل عبر Vite، والبعض الآخر خاص بالخادم فقط.
+يستخدم المشروع متغيرات بيئة للعميل والخادم. بعض المتغيرات تُحقن في جانب العميل عبر Next.js، والبعض الآخر خاص بالخادم فقط.
 
 ## متغيرات العميل
 
-- `VITE_SUPABASE_URL` — عنوان مشروع Supabase للعميل.
-- `VITE_SUPABASE_PUBLISHABLE_KEY` — المفتاح القابل للنشر للعميل.
-- `VITE_SUPABASE_PROJECT_ID` — معرف المشروع المحلي/السحابي.
+- `NEXT_PUBLIC_SUPABASE_URL` — عنوان مشروع Supabase للعميل.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — المفتاح القابل للنشر للعميل.
+- `NEXT_PUBLIC_SUPABASE_PROJECT_ID` — معرف المشروع المحلي/السحابي.
 
 ## متغيرات الخادم
 
@@ -26,9 +26,9 @@
 SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx
-VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
-VITE_SUPABASE_PROJECT_ID=inventory-management
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
+NEXT_PUBLIC_SUPABASE_PROJECT_ID=inventory-management
 NODE_ENV=development
 ```
 
