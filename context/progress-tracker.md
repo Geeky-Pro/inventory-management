@@ -224,3 +224,11 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 ## Phase 4 — Customer Ledger
 
 **NEXT — planned, not started until Phase 3 acceptance is confirmed.**
+
+### 2026-09-11 — Phase 4 Customer Ledger Foundation
+- [x] Evolved existing `debt_transactions` with `reference_table`, `reference_id`, and `payment_method` while preserving existing rows.
+- [x] Added deterministic `customer_statement` read model.
+- [x] Revoked direct client writes to `debt_transactions`; authenticated users retain SELECT under `customers.view`.
+- [x] Added `src/app/actions/customers.ts` and routed the existing debts form through the Server Action.
+- [ ] Replace generic transaction mutation with controlled opening-balance/payment operations.
+- [ ] Add idempotency/concurrency safeguards and reconciliation tests.
