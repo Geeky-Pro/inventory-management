@@ -178,3 +178,10 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Removed authenticated INSERT/UPDATE/DELETE policies for `stock_movements`; clients can read movements, but authoritative movements are now produced by server-side database logic.
 - Applied migration `20260911172000_create_purchase_transaction.sql` successfully.
 - Next: enforce database-level no-negative-stock and exactly-once posting, then add automated DB integration/concurrency tests.
+
+### 2026-09-11 — Inventory Item Serialization
+- Hardened purchase stock trigger: posted-only, positive quantity/conversion, per-item transaction advisory lock.
+- Hardened purchase void: invoice lock + per-item locks + negative-result guard before reversal.
+- Applied `20260911173000_inventory_item_serialization.sql` successfully.
+- Full no-negative-stock invariant remains to be implemented for outbound/adjustment movements using the same serialization mechanism.
+- No live business data was created/voided during this checkpoint.
