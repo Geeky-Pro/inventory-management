@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup')
   
   // Public pages that don't need auth
-  const isPublicPage = isAuthPage || pathname.startsWith('/test-session') || pathname.startsWith('/test-layout')
+  const isPublicPage = isAuthPage
 
   if (!user && !isPublicPage) {
     // Redirect to login if unauthenticated and trying to access a protected route
