@@ -230,5 +230,12 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Added deterministic `customer_statement` read model.
 - [x] Revoked direct client writes to `debt_transactions`; authenticated users retain SELECT under `customers.view`.
 - [x] Added `src/app/actions/customers.ts` and routed the existing debts form through the Server Action.
-- [ ] Replace generic transaction mutation with controlled opening-balance/payment operations.
+- [x] Add controlled opening-balance/payment operations.
 - [ ] Add idempotency/concurrency safeguards and reconciliation tests.
+
+### 2026-09-11 — Customer Opening Balance & Payments
+- [x] Applied `20260911211500_customer_opening_balance_and_payments.sql` successfully.
+- [x] Added idempotent customer opening balance RPC with customer-level locking.
+- [x] Added customer payment RPC with outstanding-balance guard and customer-level locking.
+- [x] Added Server Actions for both operations.
+- [ ] Remove/retire generic customer transaction mutation from UI after migrating all callers.
