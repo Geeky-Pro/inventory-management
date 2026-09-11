@@ -20,8 +20,8 @@
 - `src/app/actions/` — Next.js Server Actions for secure database operations.
 - `src/components/` — `AppHeader`, `AppSidebar`, `DataTable`, `ConfirmDelete`, `PageHeader` at the top level, and `src/components/ui/` for shadcn/Radix primitives.
 - `src/lib/api/` — Shared server logic and additional actions (e.g., `admin.ts`).
-- `src/lib/` — `i18n.tsx`, `permissions.tsx`, `excel.ts`, `pdf.ts` — shared logic.
-- `src/integrations/supabase/` — `client.ts` (publishable client), `types.ts` (auto-generated schema types).
+- `src/lib/` — shared application logic, Supabase clients, permissions, i18n, exports, and utilities.
+- `src/lib/supabase/` — browser/server Supabase clients; `src/integrations/supabase/types.ts` contains auto-generated schema types.
 - `supabase/migrations/` — SQL files for database schema evolution.
 - `supabase/migrations/` — 18 SQL files so far (latest: 2026-06-05).
 
