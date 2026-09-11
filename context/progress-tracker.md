@@ -55,12 +55,20 @@ Branch: `migration/nextjs`.
 | Phase | Description | Status |
 | --- | --- | --- |
 | **Phase 0** | Set up Next.js alongside the current app | ✅ **Completed** (2026-09-11) |
-| Phase 1 | Supabase SSR layer (`@supabase/ssr` + `middleware.ts`) | ❌ Not started |
+| **Phase 1** | Supabase SSR layer (`@supabase/ssr` + `middleware.ts`) | ✅ **Completed** (2026-09-11) |
 | Phase 2 | Root layout and design system | ❌ Not started |
 | Phase 3 | Auth pages and authenticated shell | ❌ Not started |
 | Phase 4 | Migrate all 14 pages | ❌ Not started |
 | Phase 5 | Server functions → Server Actions | ❌ Not started |
 | Phase 6 | Final cutover and cleanup | ❌ Not started |
+
+### Phase 1 details
+
+- Installed: `@supabase/ssr`.
+- Appended `NEXT_PUBLIC_SUPABASE_*` environment variables to `.env`.
+- Created Next.js specific clients: `lib/supabase/client.ts` and `lib/supabase/server.ts`.
+- Created `middleware.ts` for session refreshing via SSR.
+- Created verification page: `app/test-session/page.tsx`.
 
 ### Phase 0 details
 
