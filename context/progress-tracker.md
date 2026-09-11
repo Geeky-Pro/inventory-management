@@ -153,3 +153,12 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Added and applied two security migrations.
 - Verified resulting function/table privileges.
 - Phase 2 intentionally held until Phase 1 is complete.
+
+### 2026-09-11 — Phase 2 Purchase Lifecycle Foundation
+- Added `purchase_invoices.status` (`posted`/`voided`) plus void metadata; existing invoices are treated as posted.
+- Added purchase-line quantity/price integrity checks.
+- Added `purchase_void` stock movement type.
+- Removed legacy line-delete stock side effects and enforced invoice/line immutability.
+- Added authenticated, permission-checked `void_purchase_invoice(uuid)` with transactional reversal movements and latest-price recomputation.
+- Applied and verified migrations `20260911164500_purchase_lifecycle_immutable_posted.sql` and `20260911165000_fix_purchase_immutability_trigger.sql`.
+- Application invoice editing still requires migration to the new Server Action/transaction workflow before it is safe to use for existing invoices.
