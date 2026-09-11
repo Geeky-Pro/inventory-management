@@ -80,14 +80,13 @@ Scope is intentionally limited to supplier statements/balances; no full accounti
 - [x] Revoke direct client ledger writes.
 - [ ] Integrate credit purchase posting.
 - [ ] Integrate purchase void reversal.
-- [ ] Opening supplier balances.
-- [ ] Supplier payments (payment method only; no cash/bank ledger).
+- [x] Opening supplier balances.
+- [x] Supplier payments (payment method only; no cash/bank ledger).
 - [ ] Supplier statement/read model.
 - [ ] Idempotency/concurrency safeguards.
 - [ ] Integration tests and reconciliation.
 
 
-## Phase 4 — Customer Ledger
 ## Phase 4 — Customer Ledger
 
 **Not started.**
@@ -200,3 +199,10 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Verified `stock_movements`: authenticated can SELECT but cannot INSERT/UPDATE/DELETE; anon cannot INSERT.
 - Purchase and void mutations remain transaction-controlled.
 - Phase 2 is ready for isolated integration/concurrency tests before transition to the next phase.
+
+### 2026-09-11 — Supplier Opening Balance & Payments
+- [x] Added `add_supplier_opening_balance()` with supplier lock and operation-id idempotency.
+- [x] Added `pay_supplier()` with supplier lock, outstanding-balance guard, payment-method capture, and operation-id idempotency.
+- [x] Applied `20260911195500_supplier_opening_balance_and_payments.sql` successfully.
+- [ ] Supplier statement/read model.
+- [ ] Integration/reconciliation tests.
