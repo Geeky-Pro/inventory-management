@@ -295,3 +295,11 @@ Planned first pass:
 - [x] Removed skipped placeholder `tests/integration/users.test.ts`; integration coverage should be added as real tests when implemented.
 - [x] GitHub CI/status check: no workflow runs or status checks are configured for the cleanup commit, so remote CI cannot be used as validation.
 - [ ] Run local lint/build/test suite in the development environment before declaring cleanup complete.
+
+### 2026-09-12 — Vite to Next.js Environment Cleanup
+- [x] Added root eslint.config.mjs using ESLint 9 flat config + TypeScript ESLint + React Hooks + Prettier compatibility.
+- [x] Replaced remaining Vite-era import.meta.env usage in src/lib/config.server.ts with Next.js process.env and NEXT_PUBLIC_* conventions.
+- [x] Removed legacy service-role fallback from application config; only SUPABASE_SERVICE_ROLE_KEY is supported.
+- [x] Updated environment, quickstart, deployment, troubleshooting, README, and architecture docs to Next.js conventions.
+- [x] Repository search found no active Vite runtime APIs (import.meta.glob, @vitejs, vite/client, ReactDOM createRoot) and no Vite config/entry files.
+- [ ] Run npm install, npm run lint, npm run build, and npm test locally to validate the migrated project.
