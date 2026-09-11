@@ -47,11 +47,28 @@ Latest migration recorded in the repo:
   existing documentation in `docs/` (12 files) — this file is the actual
   starting point for live tracking.
 
-## Next
+## Next — Migration to Next.js
 
-- **Currently being planned:** a full migration from TanStack
-  Start/Router to Next.js (App Router), on a `migration/nextjs` branch,
-  without breaking the current app. The full plan is split into 7 phases
-  (0–6) in `context/specs/00-migration-to-nextjs.md`. Status: no phase
-  has started yet. Update this line with each phase's status as it
-  progresses.
+Full plan: `context/specs/00-migration-to-nextjs.md` (7 phases, 0–6).
+Branch: `migration/nextjs`.
+
+| Phase | Description | Status |
+| --- | --- | --- |
+| **Phase 0** | Set up Next.js alongside the current app | ✅ **Completed** (2026-09-11) |
+| Phase 1 | Supabase SSR layer (`@supabase/ssr` + `middleware.ts`) | ❌ Not started |
+| Phase 2 | Root layout and design system | ❌ Not started |
+| Phase 3 | Auth pages and authenticated shell | ❌ Not started |
+| Phase 4 | Migrate all 14 pages | ❌ Not started |
+| Phase 5 | Server functions → Server Actions | ❌ Not started |
+| Phase 6 | Final cutover and cleanup | ❌ Not started |
+
+### Phase 0 details
+
+- Installed: `next@16.3.4`, `@tailwindcss/postcss@4.3.3`, `postcss@8.5.28`.
+- Created: `next.config.ts`, `postcss.config.mjs`, `tsconfig.next.json`,
+  `app/layout.tsx`, `app/page.tsx`.
+- Scripts: `dev:next` (port 3001, Turbopack), `build:next`.
+- Fix: Next.js 16 auto-generates `AGENTS.md` — disabled via
+  `agentRules: false` in `next.config.ts`.
+- Verified: `npm run dev:next` works, `npm run build:next` succeeds,
+  `npm run build` (Vite) is completely unaffected.

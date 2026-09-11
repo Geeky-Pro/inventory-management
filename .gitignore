@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 
+# Next.js
+.next
+
 previous_chat.md
 
 # Wrangler / Cloudflare
