@@ -170,3 +170,11 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Hardened DB lifecycle: direct invoice DELETE is blocked; posted->voided UPDATE is allowed only through `void_purchase_invoice()`; invoice lines remain immutable.
 - Applied migrations `20260911170500_harden_purchase_void_transition.sql` and `20260911171000_block_purchase_invoice_delete.sql` and verified application.
 - Next: move purchase creation to one transactional Server Action, then enforce/test no-negative-stock and exactly-once posting.
+
+### 2026-09-11 — Transactional Purchase Creation
+- Added `create_purchase_invoice(...)` RPC as the single transactional purchase creation boundary.
+- Validates authenticated user, `invoices.manage`, invoice number uniqueness, totals, line quantities/prices/conversion, item existence, and item-unit ownership.
+- Updated invoice creation UI to call the transaction RPC instead of separate header/line inserts.
+- Removed authenticated INSERT/UPDATE/DELETE policies for `stock_movements`; clients can read movements, but authoritative movements are now produced by server-side database logic.
+- Applied migration `20260911172000_create_purchase_transaction.sql` successfully.
+- Next: enforce database-level no-negative-stock and exactly-once posting, then add automated DB integration/concurrency tests.
