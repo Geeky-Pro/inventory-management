@@ -256,3 +256,9 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Payment method is disabled for opening-balance operation.
 - [x] UI now sends the selected method through `recordCustomerPayment()`.
 - [ ] Final integration/concurrency/idempotency tests.
+
+### 2026-09-12 — Customer Ledger RPC Privilege Fix
+- [x] Diagnosed `permission denied for table debt_transactions`: protected RPCs were `SECURITY INVOKER` while direct table writes are intentionally revoked.
+- [x] Applied `20260912000500_fix_customer_ledger_rpc_privileges.sql` successfully.
+- [x] Converted controlled customer ledger RPCs to `SECURITY DEFINER`; explicit `customers.manage` authorization remains enforced inside the functions.
+- [x] Verified both RPCs are executable by `authenticated` and run as definer.
