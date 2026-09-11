@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { Plus, Eye, Printer, Pencil, X, Check, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { voidPurchase } from "@/app/actions/purchases";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function InvoicesPage() {
@@ -123,8 +124,8 @@ export default function InvoicesPage() {
             className: "w-36",
             cell: (r: any) => (
               <div className="flex gap-1">
-                {can("invoices.manage") && (
-                  <Button variant="ghost" size="icon" onClick={() => setEditingInvoice(r)}>
+                {can("invoices.manage") && r.status === "posted" && (
+                  <Button variant="ghost" size="icon" title={t("edit")} onClick={() => setEditingInvoice(r)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                 )}
@@ -134,12 +135,12 @@ export default function InvoicesPage() {
                   items={items as any[]}
                   allItemUnits={allItemUnits}
                 />
-                {can("invoices.manage") && (
+                {can("invoices.manage") && r.status === "posted" && (
                   <ConfirmDelete
                     onConfirm={async () => {
-                      const { error } = await supabase.from("purchase_invoices").delete().eq("id", r.id);
-                      if (error) toast.error(error.message);
-                      else { toast.success(t("delete_success")); refetch(); }
+                      const result = await voidPurchase({ invoiceId: r.id });
+                      if (!result.ok) toast.error(result.error);
+                      else { toast.success(t("save_success")); refetch(); }
                     }}
                   />
                 )}
