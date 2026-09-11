@@ -1,0 +1,91 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
+import { resolveAuthEmail } from "@/lib/auth";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+export default function LoginPage() {
+  const { t } = useI18n();
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const supabase = createClient();
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { email, error: usernameError } = resolveAuthEmail(username);
+
+    if (usernameError) {
+      setLoading(false);
+      toast.error(usernameError);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    
+    if (error) {
+      if (/email not confirmed/i.test(error.message)) {
+        toast.error(t("email_not_confirmed"));
+        return;
+      }
+      toast.error(error.message || t("login_failed"));
+      return;
+    }
+    
+    // Login successful, redirect to dashboard and refresh the router
+    // to ensure layout fetches the new user session
+    router.push("/dashboard");
+    router.refresh();
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
+      <Card className="w-full max-w-sm p-6">
+        <h1 className="text-2xl font-bold mb-1 text-center">{t("app_name")}</h1>
+        <p className="text-sm text-muted-foreground text-center mb-6">{t("login")}</p>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <Label htmlFor="u">{t("username")}</Label>
+            <Input
+              id="u"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoFocus
+              pattern="[a-zA-Z0-9_.-]+"
+            />
+          </div>
+          <div>
+            <Label htmlFor="p">{t("password")}</Label>
+            <Input
+              id="p"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {t("sign_in")}
+          </Button>
+        </form>
+        <div className="mt-4 text-center text-xs text-muted-foreground">
+          <Link href="/signup" className="underline">
+            {t("create_first_admin")}
+          </Link>
+        </div>
+      </Card>
+    </div>
+  );
+}

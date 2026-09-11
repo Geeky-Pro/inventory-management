@@ -8,7 +8,7 @@ export function getAdminSupabase() {
     config.supabaseServiceRole ??
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
     process.env.SUPABASE_SERVICE_ROLE;
-  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceRole) throw new Error("Missing SUPABASE_SERVICE_ROLE in server environment");
   if (!SUPABASE_URL) throw new Error("Missing SUPABASE_URL in server environment");
 

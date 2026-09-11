@@ -42,8 +42,32 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Here we can add route protection logic later in Phase 3.
-  // For now, we just want to ensure the session is refreshed.
+  const pathname = request.nextUrl.pathname
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup')
+  
+  // Public pages that don't need auth
+  const isPublicPage = isAuthPage || pathname.startsWith('/test-session') || pathname.startsWith('/test-layout')
+
+  if (!user && !isPublicPage) {
+    // Redirect to login if unauthenticated and trying to access a protected route
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  if (user && isAuthPage) {
+    // Redirect to dashboard if authenticated and trying to access login/signup
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard' // Or '/' if that's the main page
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect root to dashboard if logged in
+  if (user && pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }

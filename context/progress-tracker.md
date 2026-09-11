@@ -56,11 +56,18 @@ Branch: `migration/nextjs`.
 | --- | --- | --- |
 | **Phase 0** | Set up Next.js alongside the current app | ✅ **Completed** (2026-09-11) |
 | **Phase 1** | Supabase SSR layer (`@supabase/ssr` + `middleware.ts`) | ✅ **Completed** (2026-09-11) |
-| Phase 2 | Root layout and design system | ❌ Not started |
-| Phase 3 | Auth pages and authenticated shell | ❌ Not started |
-| Phase 4 | Migrate all 14 pages | ❌ Not started |
+| **Phase 2** | Root layout and design system | ✅ **Completed** |
+| **Phase 3** | Auth pages and authenticated shell | ✅ **Completed** |
+| **Phase 4** | Migrate all 14 pages | 🔄 **In progress** |
 | Phase 5 | Server functions → Server Actions | ❌ Not started |
 | Phase 6 | Final cutover and cleanup | ❌ Not started |
+
+### Phase 4 details
+
+  - [x] Group 1 (Static/Simple Data): `/profile`, `/settings`, `/units`, `/categories`
+  - [x] Group 2 (Tables): `/items`, `/suppliers`, `/customers`
+  - [x] Group 3 (Interactive): `/dashboard`, `/invoices`, `/movements`, `/debts`
+  - [x] Group 4 (Admin): `/users`, `/permission-groups`, `/audit-logs`, `/reports` (Ready for verification)
 
 ### Phase 1 details
 

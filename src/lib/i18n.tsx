@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 type Locale = "ar" | "en";
@@ -335,10 +337,10 @@ interface I18nCtx {
 
 const Ctx = createContext<I18nCtx | null>(null);
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+export function I18nProvider({ children, defaultLocale }: { children: ReactNode, defaultLocale?: Locale }) {
   const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window === "undefined") return "ar";
-    return (localStorage.getItem("locale") as Locale) || "ar";
+    if (typeof window === "undefined") return defaultLocale || "ar";
+    return (localStorage.getItem("locale") as Locale) || defaultLocale || "ar";
   });
 
   useEffect(() => {
@@ -349,7 +351,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = (l: Locale) => {
     setLocaleState(l);
-    if (typeof window !== "undefined") localStorage.setItem("locale", l);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("locale", l);
+      document.cookie = `locale=${l}; path=/; max-age=31536000`;
+    }
   };
 
   const t: I18nCtx["t"] = (k, vars) => {
