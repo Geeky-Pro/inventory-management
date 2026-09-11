@@ -220,6 +220,7 @@ function TxForm({
   const [exchange_rate, setRate] = useState(1);
   const [transaction_date, setDate] = useState(todayStr());
   const [invoice_ref, setRef] = useState("");
+  const [payment_method, setPaymentMethod] = useState("cash");
   const [notes, setNotes] = useState("");
   const supabase = createClient();
 
@@ -231,7 +232,7 @@ function TxForm({
   const operationId = crypto.randomUUID();
     const result = transaction_type === "opening"
       ? await addCustomerOpeningBalance({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` })
-      : await recordCustomerPayment({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, paymentMethod: "cash", notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` });
+      : await recordCustomerPayment({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, paymentMethod: payment_method, notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` });
     if (!result.ok) { toast.error(result.error); return; }
 
     toast.success(t("save_success"));
@@ -274,8 +275,20 @@ function TxForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="debit">{t("debit")}</SelectItem>
-                <SelectItem value="credit">{t("credit_d")}</SelectItem>
+                <SelectItem value="opening">{t("opening_balance")}</SelectItem>
+                <SelectItem value="payment">{t("payment")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>{t("payment_method")}</Label>
+            <Select value={payment_method} onValueChange={setPaymentMethod} disabled={transaction_type !== "payment"}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">{t("cash")}</SelectItem>
+                <SelectItem value="transfer">{t("transfer")}</SelectItem>
+                <SelectItem value="check">{t("check")}</SelectItem>
+                <SelectItem value="other">{t("other")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
