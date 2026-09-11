@@ -6,8 +6,12 @@
  * - تحديد الوحدة الأساسية (factor = 1)
  * - تحديد الوحدة الافتراضية للشراء
  */
+"use client";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
