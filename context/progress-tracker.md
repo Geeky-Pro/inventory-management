@@ -62,31 +62,32 @@ These are deliberate scope decisions, not missing features.
 - Do not weaken `has_permission` / `is_admin` until every RLS/caller dependency has been reviewed.
 - Database changes must always be recorded as migrations under `supabase/migrations/` and applied to the live Supabase project.
 
+
 ## Phase 2 — Inventory Core
 
-**Not started.** Do not begin until Phase 1 security hardening is complete.
+**CLOSED 2026-09-11** — User completed integration testing successfully.
 
-Planned review:
-- Items and units.
-- Stock movement model.
-- Current-stock consistency.
-- Atomic purchase posting.
-- Negative-stock enforcement at DB level.
-- Latest-purchase-price costing.
-- Stock adjustment/journal integrity.
-- Void/reversal behavior.
+Delivered: transactional purchase creation, immutable posted/voided purchase lifecycle, item-level serialization, safe/idempotent stock adjustment, and direct stock-ledger write protection.
 
-## Phase 3 — Purchasing
+## Phase 3 — Supplier Ledger & Purchasing Completion
 
-**Not started.**
+**IN PROGRESS 2026-09-11**
 
-Planned:
-- Purchase posting.
-- Supplier balance integration.
-- Void/reversal.
-- Multi-unit purchase pricing.
-- Currency/exchange-rate snapshots.
+Scope is intentionally limited to supplier statements/balances; no full accounting and no cash/bank accounts.
 
+- [x] Create append-only `supplier_transactions` ledger.
+- [x] Create derived `supplier_balances` view.
+- [x] Revoke direct client ledger writes.
+- [ ] Integrate credit purchase posting.
+- [ ] Integrate purchase void reversal.
+- [ ] Opening supplier balances.
+- [ ] Supplier payments (payment method only; no cash/bank ledger).
+- [ ] Supplier statement/read model.
+- [ ] Idempotency/concurrency safeguards.
+- [ ] Integration tests and reconciliation.
+
+
+## Phase 4 — Customer Ledger
 ## Phase 4 — Customer Ledger
 
 **Not started.**
