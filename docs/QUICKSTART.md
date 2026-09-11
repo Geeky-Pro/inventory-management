@@ -2,7 +2,7 @@
 
 1. متطلبات النظام:
 
-- Node.js 18+ وnpm أو bun (المشروع مهيأ مع Vite + TypeScript).
+- Node.js 18+ وnpm أو bun (المشروع مهيأ مع Next.js + TypeScript).
 - Supabase CLI (لتشغيل Supabase محلياً عبر Docker).
 
 1. تثبيت الحزم:
