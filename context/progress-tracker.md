@@ -130,6 +130,12 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 
 ## Change Log
 
+### 2026-09-11 — Technical Architecture Audit
+- Audited the live schema, relationships, RLS model, functions/triggers, indexes, migrations, and application data-access patterns.
+- Identified P0 inventory integrity risks around competing item_stock/stock_movements paths and invoice-item update behavior.
+- Identified P1 server-action authorization and audit-actor issues for follow-up.
+- Added `docs/TECHNICAL_EXECUTION_PLAN.md` with the implementation plan, invariants, migrations, Server Actions, tests, and execution order.
+
 ### 2026-09-11 — Phase 1 Security Hardening
 - Bound permission checks to `auth.uid()` via `current_user_has_permission(text)` and migrated existing public/storage policies to it.
 - Revoked `authenticated` EXECUTE on `has_permission(uuid,text)` and `is_admin(uuid)`; retained them for trusted `service_role` compatibility.
