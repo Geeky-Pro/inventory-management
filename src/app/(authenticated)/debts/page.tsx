@@ -214,7 +214,7 @@ function TxForm({
   const [open, setOpen] = useState(false);
   const baseCur = currencies.find((c) => c.is_base)?.code ?? "YER";
   const [customer_id, setCustomer] = useState<string | null>(defaultCustomer ?? null);
-  const [transaction_type, setType] = useState("debit");
+  const [transaction_type, setType] = useState("payment");
   const [amount, setAmount] = useState<number>(0);
   const [currency_code, setCur] = useState(baseCur);
   const [exchange_rate, setRate] = useState(1);
@@ -229,7 +229,7 @@ function TxForm({
       return;
     }
   const operationId = crypto.randomUUID();
-    const result = transaction_type === "debit"
+    const result = transaction_type === "opening"
       ? await addCustomerOpeningBalance({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` })
       : await recordCustomerPayment({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, paymentMethod: "cash", notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` });
     if (!result.ok) { toast.error(result.error); return; }
