@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
 import { usePermissions } from "@/lib/next/permissions";
-import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { ConfirmAction } from "@/components/ConfirmAction";
 import { fmtNum, fmtDate, todayStr } from "@/lib/format";
 import { exportTablePDF } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
@@ -136,11 +136,18 @@ export default function InvoicesPage() {
                   allItemUnits={allItemUnits}
                 />
                 {can("invoices.manage") && r.status === "posted" && (
-                  <ConfirmDelete
+                  <ConfirmAction
+                    title={t("confirm_void_invoice")}
+                    confirmLabel={t("void_invoice")}
+                    trigger={
+                      <Button variant="ghost" size="icon" className="text-destructive" title={t("void_invoice")}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    }
                     onConfirm={async () => {
                       const result = await voidPurchase({ invoiceId: r.id });
                       if (!result.ok) toast.error(result.error);
-                      else { toast.success(t("save_success")); refetch(); }
+                      else { toast.success(t("void_success")); refetch(); }
                     }}
                   />
                 )}
