@@ -31,6 +31,8 @@ import { exportTablePDF } from "@/lib/pdf";
 import { Plus, Download, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { createCustomerTransaction } from "@/app/actions/customers";
+
 
 export default function DebtsPage() {
   const { t } = useI18n();
@@ -226,23 +228,9 @@ function TxForm({
       toast.error("invalid");
       return;
     }
-    const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("debt_transactions").insert({
-      customer_id,
-      transaction_type,
-      amount,
-      currency_code,
-      exchange_rate,
-      amount_local: amount * exchange_rate,
-      transaction_date,
-      invoice_ref: invoice_ref || null,
-      notes: notes || null,
-      created_by: u.user?.id,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+  const result = await createCustomerTransaction({ customerId: customer_id, transactionType: transaction_type as "debit" | "credit", amount, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, invoiceRef: invoice_ref || undefined, notes: notes || undefined });
+    if (!result.ok) { toast.error(result.error); return; }
+
     toast.success(t("save_success"));
     setOpen(false);
     onDone();
