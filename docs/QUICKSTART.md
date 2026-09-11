@@ -2,8 +2,8 @@
 
 1. متطلبات النظام:
 
-- Node.js 18+ وnpm أو bun (المشروع مهيأ مع Next.js + TypeScript).
-- Supabase CLI (لتشغيل Supabase محلياً عبر Docker).
+- Node.js 20+ وnpm أو bun (المشروع مهيأ مع Next.js + TypeScript).
+- Supabase CLI (اختياري، فقط عند الحاجة إلى تشغيل Supabase محليًا عبر Docker).
 
 1. تثبيت الحزم:
 
@@ -29,7 +29,7 @@ npm run dev
 
 ```bash
 npm run build
-npm run preview
+npm run start
 ```
 
 أوامر إضافية:
