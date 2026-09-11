@@ -265,7 +265,6 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
   }, [open, profile.id, userGroups, userPerms]);
 
   const save = async () => {
-    // Compute diffs instead of wiping all rows: safer for partial failures.
     const existingGroupIds = new Set(
       userGroups.filter((g) => g.user_id === profile.id).map((g) => g.group_id),
     );
@@ -279,7 +278,6 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
     const permsToInsert = Array.from(selectedPerms).filter((p) => !existingPermKeys.has(p));
     const permsToDelete = Array.from(existingPermKeys).filter((p) => !selectedPerms.has(p));
 
-    // Execute deletions first (idempotent), then inserts. Handle errors explicitly.
     if (groupsToDelete.length) {
       const { error } = await supabase
         .from("user_permission_groups")
@@ -341,7 +339,8 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
 
   const toggle = (set: Set<string>, setSet: (s: Set<string>) => void, key: string) => {
     const n = new Set(set);
-    if (n.has(key)) n.delete(key); else n.add(key);
+    if (n.has(key)) n.delete(key);
+    else n.add(key);
     setSet(n);
   };
 
