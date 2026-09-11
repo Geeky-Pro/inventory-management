@@ -173,3 +173,11 @@ Next: audit every remaining stock-changing trigger/function and consolidate open
 - No live stock adjustment or purchase was created during this audit.
 
 Phase 2 is now ready for isolated integration/concurrency testing. Do not add new inventory mutation paths without routing them through a transaction boundary with the same item serialization invariant.
+
+
+### Phase 3 checkpoint — Purchase ↔ Supplier Ledger
+- Applied `20260911192000_integrate_supplier_ledger_with_purchases.sql` successfully.
+- `create_purchase_invoice()` now requires a supplier and valid payment type (`cash`/`credit`) and creates a supplier debit atomically only for credit purchases.
+- `void_purchase_invoice()` now reverses the supplier debit atomically with the inventory reversal for credit purchases.
+- Supplier ledger entries reference the originating purchase invoice and preserve currency/exchange-rate snapshots.
+- Next: implement supplier opening balances and supplier payments as controlled/idempotent operations, then build statement/read model and tests.
