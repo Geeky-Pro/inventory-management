@@ -13,7 +13,7 @@ npm run build
 لـ preview محلي:
 
 ```bash
-npm run preview
+npm run start
 ```
 
 نصائح للنشر:
