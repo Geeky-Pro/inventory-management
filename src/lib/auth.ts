@@ -1,4 +1,4 @@
-const USERNAME_PATTERN = /^[a-zA-Z0-9_.\-]+$/;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 
 export function resolveAuthEmail(identifier: string) {
   const value = identifier.trim();
