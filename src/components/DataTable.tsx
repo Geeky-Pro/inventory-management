@@ -35,7 +35,7 @@ export function DataTable<T>({
         </div>
       ) : (
         rows.map((r, idx) => (
-          <div key={(r as any).id ?? idx} className="rounded-md border bg-card p-3 shadow-sm">
+          <div key={idx} className="rounded-md border bg-card p-3 shadow-sm">
             <div className="space-y-2">
               {columns.map((c) => (
                 <div
@@ -81,7 +81,7 @@ export function DataTable<T>({
               </TableRow>
             ) : (
               rows.map((r, i) => (
-                <TableRow key={(r as any).id ?? i}>
+                <TableRow key={i}>
                   {columns.map((c) => (
                     <TableCell key={c.key} className={c.className}>
                       {c.cell(r)}
