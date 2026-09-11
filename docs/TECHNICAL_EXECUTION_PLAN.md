@@ -181,3 +181,16 @@ Phase 2 is now ready for isolated integration/concurrency testing. Do not add ne
 - `void_purchase_invoice()` now reverses the supplier debit atomically with the inventory reversal for credit purchases.
 - Supplier ledger entries reference the originating purchase invoice and preserve currency/exchange-rate snapshots.
 - Next: implement supplier opening balances and supplier payments as controlled/idempotent operations, then build statement/read model and tests.
+
+
+## Phase 3 — Verification & Closure — 2026-09-11
+
+- Live reconciliation found no duplicate non-null supplier references.
+- `supplier_balances` is derived from `supplier_transactions`; no manual balance column is used.
+- Supplier statement ordering is deterministic and queryable.
+- No test/business data was inserted during verification.
+- Phase 3 functional foundation is complete; user-side integration tests are the remaining acceptance gate before formal closure.
+
+## Phase 4 — Customer Ledger
+
+Scope mirrors the supplier ledger without introducing full accounting: customer opening balances, customer debt transactions, customer payments, customer statements, and balance integrity.
