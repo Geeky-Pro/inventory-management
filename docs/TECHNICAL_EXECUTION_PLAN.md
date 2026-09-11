@@ -100,3 +100,19 @@ Phase 5: reports and UX.
 ## Immediate next task
 
 Before changing inventory schema, trace every INSERT/UPDATE/DELETE path affecting purchase_invoice_items, stock_movements, and item_stock in both migrations and application code. Then implement the smallest corrective migration that makes inventory behavior deterministic.
+
+## Inventory mutation trace — 2026-09-11
+
+Live trigger inspection confirms the active purchase-item stock path is narrower than the historical migrations suggest:
+
+- purchase_invoice_items has trg_invoice_item_stock — AFTER INSERT -> on_invoice_item_change().
+- purchase_invoice_items has trg_invoice_item_stock_del — BEFORE DELETE -> on_invoice_item_delete().
+- There is no active UPDATE trigger on purchase_invoice_items for stock mutation.
+- purchase_invoices has only audit + updated_at triggers in the live snapshot.
+- stock_movements has audit logging only in the live snapshot.
+
+The application invoice editor currently performs an invoice UPDATE, then deletes all existing invoice lines and inserts the replacement lines. Because the delete and re-insert fire stock triggers, editing an existing invoice can mutate stock even without an UPDATE trigger. This confirms the P0 integrity issue and makes the editor's current save strategy unsafe for posted invoices.
+
+The live stock_movements table currently contains 4 rows at audit time; no destructive data migration was performed during this trace.
+
+Decision: do not patch this with another trigger. Phase 2 should first introduce an explicit atomic purchase-posting/voiding transaction and then retire direct line-level stock side effects. The purchase editor must not be allowed to use delete/reinsert as a way to alter posted inventory.
