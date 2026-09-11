@@ -250,3 +250,9 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Reconciliation check found 0 customer balance mismatches.
 - [x] Applied `20260911212500_customer_payment_methods.sql` successfully.
 - [ ] UI payment-method selector and final integration/concurrency tests.
+
+### 2026-09-11 — Customer Payment UI
+- [x] Added explicit payment-method selector to `/debts`: cash, transfer, check, other.
+- [x] Payment method is disabled for opening-balance operation.
+- [x] UI now sends the selected method through `recordCustomerPayment()`.
+- [ ] Final integration/concurrency/idempotency tests.
