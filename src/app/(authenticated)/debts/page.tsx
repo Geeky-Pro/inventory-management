@@ -31,7 +31,7 @@ import { exportTablePDF } from "@/lib/pdf";
 import { Plus, Download, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { createCustomerTransaction } from "@/app/actions/customers";
+import { addCustomerOpeningBalance, recordCustomerPayment } from "@/app/actions/customers";
 
 
 export default function DebtsPage() {
@@ -228,7 +228,10 @@ function TxForm({
       toast.error("invalid");
       return;
     }
-  const result = await createCustomerTransaction({ customerId: customer_id, transactionType: transaction_type as "debit" | "credit", amount, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, invoiceRef: invoice_ref || undefined, notes: notes || undefined });
+  const operationId = crypto.randomUUID();
+    const result = transaction_type === "debit"
+      ? await addCustomerOpeningBalance({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` })
+      : await recordCustomerPayment({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, paymentMethod: "cash", notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` });
     if (!result.ok) { toast.error(result.error); return; }
 
     toast.success(t("save_success"));
