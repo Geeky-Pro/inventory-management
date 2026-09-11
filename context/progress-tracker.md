@@ -49,8 +49,8 @@ These are deliberate scope decisions, not missing features.
 
 ### Phase 1 still in progress
 
-- [ ] Review `has_permission` / `is_admin` SECURITY DEFINER design and ensure callers cannot use them as arbitrary user-identity checks.
-- [ ] Complete RLS policy audit table-by-table, including INSERT/UPDATE/DELETE `WITH CHECK`.
+- [x] Reworked RLS/Storage permission checks to use `current_user_has_permission(permission)` bound to the authenticated session; revoked `authenticated` EXECUTE on the old arbitrary-UUID helpers.
+- [ ] Complete RLS policy audit table-by-table, including INSERT/UPDATE/DELETE `WITH CHECK` (permission-helper migration completed; policy semantics still being audited).
 - [ ] Review Storage policies and confirm whether Storage is actually used by the application.
 - [ ] Determine whether `pg_graphql` is used; if not, consider disabling it rather than weakening application RLS.
 - [ ] Enable Supabase Auth leaked-password protection in project settings.
@@ -131,6 +131,9 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 ## Change Log
 
 ### 2026-09-11 — Phase 1 Security Hardening
+- Bound permission checks to `auth.uid()` via `current_user_has_permission(text)` and migrated existing public/storage policies to it.
+- Revoked `authenticated` EXECUTE on `has_permission(uuid,text)` and `is_admin(uuid)`; retained them for trusted `service_role` compatibility.
+- Added and applied `supabase/migrations/20260911162000_session_bound_permission_checks.sql`.
 - Removed tracked `.env` and hardened `.gitignore`.
 - Restricted internal Supabase functions and trigger functions.
 - Hardened function search paths.
