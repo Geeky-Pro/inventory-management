@@ -566,10 +566,19 @@ function InvoiceForm({
       if (e3) { toast.error(e3.message); setSaving(false); return; }
       toast.success(t("edit_success"));
     } else {
-      const { data: inv, error: e1 } = await supabase.from("purchase_invoices").insert({ ...header, created_by: uid }).select().single();
-      if (e1 || !inv) { toast.error(e1?.message ?? ""); setSaving(false); return; }
-      const { error: e2 } = await supabase.from("purchase_invoice_items").insert(linesPayload.map((l) => ({ ...l, invoice_id: inv.id })));
-      if (e2) { toast.error(e2.message); setSaving(false); return; }
+      const { data: invoiceId, error } = await (supabase as any).rpc("create_purchase_invoice", {
+        _invoice_no: header.invoice_no,
+        _invoice_date: header.invoice_date,
+        _supplier_id: header.supplier_id,
+        _payment_type: header.payment_type,
+        _currency_code: header.currency_code,
+        _exchange_rate: header.exchange_rate,
+        _total_foreign: header.total_foreign,
+        _total_local: header.total_local,
+        _notes: header.notes,
+        _items: linesPayload,
+      });
+      if (error || !invoiceId) { toast.error(error?.message ?? ""); setSaving(false); return; }
       toast.success(t("save_success"));
     }
 
