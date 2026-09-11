@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
 import { usePermissions } from "@/lib/permissions";
-import { Plus, Pencil, ChevronDown, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Plus, Pencil } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 
@@ -43,9 +43,7 @@ function Page() {
   // Build a flattened tree for display with depth for indentation
   // Work on shallow copies to avoid mutating original rows (prevents duplicate children accumulation)
   const buildTree = (items: any[]) => {
-    const copies = (items || [])
-      .map((it) => ({ ...it }))
-      .sort((a, b) => a.name_ar.localeCompare(b.name_ar));
+    const copies = (items || []).map((it) => ({ ...it }));
     const map = copies.reduce(
       (acc: Record<string, any>, it: any) => ((acc[it.id] = it), acc),
       {} as Record<string, any>,
@@ -61,114 +59,22 @@ function Page() {
     });
     return roots;
   };
-
+  const flattened: any[] = [];
+  const walk = (nodes: any[], depth = 0) => {
+    nodes.forEach((n) => {
+      flattened.push({ ...n, depth });
+      if (n.children) walk(n.children, depth + 1);
+    });
+  };
   const treeRoots = buildTree(rows as any[]);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    if (!treeRoots.length || Object.keys(expanded).length > 0) return;
-    const initial: Record<string, boolean> = {};
-    const collectRootIds = (nodes: any[]) => {
-      nodes.forEach((node: any) => {
-        if (node.children?.length) initial[node.id] = true;
-      });
-    };
-    collectRootIds(treeRoots);
-    setExpanded(initial);
-  }, [treeRoots, expanded]);
-
-  const setAllExpanded = (isExpanded: boolean) => {
-    const updated: Record<string, boolean> = {};
-    const collect = (nodes: any[]) => {
-      nodes.forEach((node: any) => {
-        if (node.children?.length) {
-          updated[node.id] = isExpanded;
-          collect(node.children);
-        }
-      });
-    };
-    collect(treeRoots);
-    setExpanded(updated);
-  };
-
-  const toggleRow = (id: string) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  walk(treeRoots, 0);
 
   const refetch = () => qc.invalidateQueries({ queryKey: ["categories"] });
 
-  const renderTree = (nodes: any[], depth = 0): React.ReactNode[] =>
-    nodes.flatMap((node: any) => {
-      const hasChildren = Array.isArray(node.children) && node.children.length > 0;
-      return [
-        <div
-          key={node.id}
-          className="grid gap-3 rounded-md border border-border bg-background p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-        >
-          <div className="flex items-center gap-2">
-            <div className="inline-flex items-center" style={{ marginLeft: `${depth * 1.25}rem` }}>
-              {hasChildren ? (
-                <button
-                  type="button"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded border bg-card text-muted-foreground"
-                  onClick={() => toggleRow(node.id)}
-                >
-                  {expanded[node.id] ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </button>
-              ) : (
-                <span className="inline-flex h-6 w-6" />
-              )}
-              <div>
-                <p className="font-medium">{node.name_ar}</p>
-                <p className="text-sm text-muted-foreground">{node.name_en ?? "-"}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="text-sm text-muted-foreground">
-              {rows.find((x: any) => x.id === node.parent_id)?.name_ar ?? "-"}
-            </span>
-            {can("items.manage") ? (
-              <div className="flex gap-1">
-                <CategoryForm row={node} categories={rows} onDone={refetch} />
-                <ConfirmDelete
-                  onConfirm={async () => {
-                    const { error } = await supabase.from("categories").delete().eq("id", node.id);
-                    if (error) toast.error(error.message);
-                    else {
-                      toast.success(t("save_success"));
-                      refetch();
-                    }
-                  }}
-                />
-              </div>
-            ) : null}
-          </div>
-        </div>,
-        hasChildren && expanded[node.id] ? renderTree(node.children, depth + 1) : null,
-      ];
-    });
-
   return (
     <div>
-      <PageHeader title={t("categories")}> 
-        <div className="flex flex-wrap items-center gap-2">
-          {rows.length > 0 ? (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setAllExpanded(true)}>
-                {t("expand_all")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setAllExpanded(false)}>
-                {t("collapse_all")}
-              </Button>
-            </>
-          ) : null}
-          {can("items.manage") && <CategoryForm categories={rows} onDone={refetch} />}
-        </div>
+      <PageHeader title={t("categories")}>
+        {can("items.manage") && <CategoryForm categories={rows} onDone={refetch} />}
       </PageHeader>
       <DataTable
         rows={flattened}
@@ -176,29 +82,9 @@ function Page() {
           {
             key: "name_ar",
             header: t("name_ar"),
-            cell: (r: any) => {
-              const hasChildren = Array.isArray(r.children) && r.children.length > 0;
-              return (
-                <div className="flex items-center gap-2" style={{ marginLeft: `${(r.depth ?? 0) * 1.25}rem` }}>
-                  {hasChildren ? (
-                    <button
-                      type="button"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border bg-card text-muted-foreground"
-                      onClick={() => toggleRow(r.id)}
-                    >
-                      {expanded[r.id] ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                  ) : (
-                    <span className="inline-flex h-6 w-6" />
-                  )}
-                  <span>{r.name_ar}</span>
-                </div>
-              );
-            },
+            cell: (r: any) => (
+              <span style={{ marginLeft: `${(r.depth ?? 0) * 1}rem` }}>{r.name_ar}</span>
+            ),
           },
           { key: "name_en", header: t("name_en"), cell: (r: any) => r.name_en ?? "-" },
           {
