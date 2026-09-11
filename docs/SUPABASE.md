@@ -1,6 +1,6 @@
 # Supabase Integration
 
-المجلد: `src/integrations/supabase/`
+العملاء الحاليون: `src/lib/supabase/`؛ أما `src/integrations/supabase/types.ts` فهو مصدر الأنواع المولدة.
 
 حالة البيئة المحلية الحالية:
 
@@ -10,9 +10,9 @@
 
 الملفات المهمة:
 
-- `client.ts` — عميل Supabase للعميل (publishable key). يستخدم متغيرات `VITE_SUPABASE_*`.
-- `client.server.ts` — عميل server/admin يستخدم `SUPABASE_SERVICE_ROLE_KEY` للعمليات الموثوقة.
-- `auth-attacher.ts` — ميدلوير يضيف Authorization header لنداءات السيرفر استناداً إلى جلسة المستخدم.
+- `src/lib/supabase/client.ts` — Browser Client باستخدام `@supabase/ssr`.
+- `src/lib/supabase/server.ts` — Server Client مرتبط بالـcookies.
+- لا تعتمد على ملفات العملاء القديمة داخل `src/integrations/supabase/`؛ الأنواع فقط هي التي تبقى هناك.
 - Note: `auth-middleware.ts` was removed from the codebase; token validation for server-side flows is handled via server functions and `supabaseAdmin` where needed.
 - `types.ts` — أنماط الجداول المولدة (generated) من schema.
 
