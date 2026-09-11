@@ -13,7 +13,7 @@
   - `(authenticated)/` — مجموعة المسارات المحمية، وتحتوي على مخطط مخصص وتوجيه تلقائي لغير المسجلين.
 - `src/app/actions/` — خوادم الأفعال الآمنة (Server Actions) للتعامل مع قاعدة البيانات والمصادقة بعيداً عن المتصفح.
 - `src/components/` — مكونات React المشتركة، مثل الرأسية (AppHeader) والشريط الجانبي (AppSidebar). الطبقة الأساسية للمكونات توجد في `src/components/ui/` باستخدام (shadcn/ui).
-- `src/integrations/supabase/` — تكوين عملاء Supabase لجهة العميل (`client.ts`) ولجهة الخادم، بالإضافة إلى الـ types المولدة تلقائياً.
+- `src/lib/supabase/` — عملاء Supabase الحاليون للمتصفح والخادم باستخدام SSR-aware cookies. `src/integrations/supabase/types.ts` يحتفظ بالأنواع المولدة فقط.
 - `supabase/migrations/` — أوامر SQL لتعديل بنية قاعدة البيانات، تعريف الجداول، الروابط، والمشغلات (Triggers).
 
 ملاحظات مهمة:
