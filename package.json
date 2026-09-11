@@ -7,7 +7,7 @@
     "dev": "next dev --port 5000 --turbopack",
     "test": "vitest",
     "build": "next build",
-    "preview": "next start",
+    "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
