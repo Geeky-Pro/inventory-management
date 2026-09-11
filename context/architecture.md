@@ -50,10 +50,11 @@
    Only `client.server.ts` uses it. Anything that needs elevated
    privileges goes through a server function, never through the client
    directly.
-2. **Any server-only module is named with a `*.server.ts` suffix**, or
-   marked with `@tanstack/react-start/server-only`. Importing Next.js's
-   `server-only` package is explicitly forbidden at the ESLint level
-   (`no-restricted-imports`).
+2. **`use server` is a Hard Boundary**
+   Any code touching the database securely or executing privileged admin operations **must** be inside a Server Action (marked with `"use server"`).
+   - Client components (`"use client"`) **cannot** import direct database logic. They must call Server Actions.
+   - Server components can call these functions directly.
+   - Next.js Server Actions automatically serialize inputs and outputs.
 3. **`src/routeTree.gen.ts` is auto-generated — never edited by hand.**
 4. **`audit_logs` is readable only by users with `system.admin`
    permission** — enforced at two levels together: database RLS, and the

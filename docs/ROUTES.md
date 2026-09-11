@@ -1,31 +1,33 @@
 # Routes — خريطة المسارات
 
-المسارات مبنية على الملفات ضمن `src/routes/`، مع تخطيط خاص للمنطقة المؤمّنة (`_authenticated`).
+المسارات مبنية على هيكل المجلدات الخاص بـ Next.js App Router ضمن مجلد `src/app/`، مع استخدام Route Groups لتنظيم التخطيط (Layouts).
 
-ملف → مسار (أهم الصفحات):
+مجلد → مسار (أهم الصفحات):
 
-- `src/routes/index.tsx` — `/` (تحويل إلى `/dashboard` للمستخدمين المسجّلين).
-- `src/routes/login.tsx` — `/login`.
-- `src/routes/signup.tsx` — `/signup`.
-- `src/routes/__root.tsx` — layout الجذر ويتضمّن استيراد `styles.css`.
-- `src/routes/_authenticated.tsx` — layout المؤمّن، يركّب `AppSidebar` و`AppHeader`.
+- `src/app/page.tsx` — `/` (الصفحة الرئيسية أو تحويل إلى `/dashboard`).
+- `src/app/login/page.tsx` — `/login`.
+- `src/app/signup/page.tsx` — `/signup`.
+- `src/app/layout.tsx` — layout الجذر ويتضمّن استيراد `styles.css`.
+- `src/app/(authenticated)/layout.tsx` — layout المؤمّن، يركّب `AppSidebar` و`AppHeader`.
 
-المسارات المؤمّنة (داخل `_authenticated`):
+المسارات المؤمّنة (داخل `(authenticated)`):
 
-- `/dashboard` — `src/routes/_authenticated/dashboard.tsx`
-- `/items` — `src/routes/_authenticated/items.tsx`
-- `/categories` — `src/routes/_authenticated/categories.tsx`
-- `/customers` — `src/routes/_authenticated/customers.tsx`
-- `/invoices` — `src/routes/_authenticated/invoices.tsx`
-- `/movements` — `src/routes/_authenticated/movements.tsx`
-- `/reports` — `src/routes/_authenticated/reports.tsx`
-- `/settings` — `src/routes/_authenticated/settings.tsx`
-- `/suppliers` — `src/routes/_authenticated/suppliers.tsx`
-- `/units` — `src/routes/_authenticated/units.tsx`
-- `/debts` — `src/routes/_authenticated/debts.tsx`
-- `/users` — `src/routes/_authenticated/users.tsx`
+- `/dashboard` — `src/app/(authenticated)/dashboard/page.tsx`
+- `/items` — `src/app/(authenticated)/items/page.tsx`
+- `/categories` — `src/app/(authenticated)/categories/page.tsx`
+- `/customers` — `src/app/(authenticated)/customers/page.tsx`
+- `/invoices` — `src/app/(authenticated)/invoices/page.tsx`
+- `/movements` — `src/app/(authenticated)/movements/page.tsx`
+- `/reports` — `src/app/(authenticated)/reports/page.tsx`
+- `/settings` — `src/app/(authenticated)/settings/page.tsx`
+- `/suppliers` — `src/app/(authenticated)/suppliers/page.tsx`
+- `/units` — `src/app/(authenticated)/units/page.tsx`
+- `/debts` — `src/app/(authenticated)/debts/page.tsx`
+- `/users` — `src/app/(authenticated)/users/page.tsx`
+- `/permission-groups` — `src/app/(authenticated)/permission-groups/page.tsx`
+- `/audit-logs` — `src/app/(authenticated)/audit-logs/page.tsx`
 
 ملاحظات:
 
-- عمليات الحماية (guard) تتم في `beforeLoad` أو middleware المرتبط بـ `_authenticated`، عبر `supabase.auth.getUser()` أو التحقق من صلاحيات المستخدم.
-- راجع `routeTree.gen.ts` للمطابقة الدقيقة بين أسماء المسارات والملفات.
+- عمليات الحماية (guard) تتم في `middleware.ts` في جذر المشروع، والذي يمنع الوصول للصفحات المحمية بدون تسجيل دخول، ويقوم بتجديد جلسة Supabase بشكل آمن.
+- دوال الواجهة الخلفية (Backend logic) تم عزلها داخل `src/app/actions` لتعمل كـ Next.js Server Actions بصلاحيات عالية وأمان.

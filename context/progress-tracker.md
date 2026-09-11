@@ -58,9 +58,9 @@ Branch: `migration/nextjs`.
 | **Phase 1** | Supabase SSR layer (`@supabase/ssr` + `middleware.ts`) | ✅ **Completed** (2026-09-11) |
 | **Phase 2** | Root layout and design system | ✅ **Completed** |
 | **Phase 3** | Auth pages and authenticated shell | ✅ **Completed** |
-| **Phase 4** | Migrate all 14 pages | 🔄 **In progress** |
-| Phase 5 | Server functions → Server Actions | ❌ Not started |
-| Phase 6 | Final cutover and cleanup | ❌ Not started |
+| **Phase 4** | Migrate all 14 pages | ✅ **Completed** (2026-09-11) |
+| Phase 5 | Server functions → Server Actions | ✅ **Completed** (2026-09-11) |
+| Phase 6 | Final cutover and cleanup | ✅ **Completed** (2026-09-11) |
 
 ### Phase 4 details
 
