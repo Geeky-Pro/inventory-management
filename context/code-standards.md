@@ -7,7 +7,7 @@
   `@typescript-eslint/no-unused-vars` is intentionally disabled — don't
   re-enable it without discussion, this is an existing decision, not an
   oversight.
-- Importing Next.js `server-only` is standard for marking backend logic. 
+- Importing Next.js `server-only` is standard for marking backend logic.
 - Avoid directly executing heavy backend logic in UI components; prefer extracting it to Server Actions.
 
 ## Before any PR
@@ -19,6 +19,7 @@
 
 Any new CRUD page is built on top of these four first (check any existing
 page in `src/app/(authenticated)/` as a reference):
+
 - `DataTable` — a generic table with filtering and pagination.
 - `ConfirmDelete` — a reusable delete-confirmation dialog.
 - `PageHeader` — a unified page header (title + action buttons).
@@ -35,7 +36,7 @@ page in `src/app/(authenticated)/` as a reference):
 
 ## Server Actions
 
-- Collected in `src/app/actions/` or `src/lib/api/` (e.g. `users.ts`, `admin.ts`). 
+- Collected in `src/app/actions/` or `src/lib/api/` (e.g. `users.ts`, `admin.ts`).
 - Any new server logic follows the same location and naming (must be marked with `"use server"`).
 - Server actions should return serializable JSON data or appropriate React state responses.
 
