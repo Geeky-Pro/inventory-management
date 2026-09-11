@@ -2,11 +2,23 @@
 
 import { resolveAuthEmail } from "@/lib/auth";
 import { getAdminSupabase } from "@/lib/api/admin";
+import { z } from "zod";
+
+const UserDataSchema = z.object({
+  username: z.string().min(3),
+  password: z.string().min(6).optional(),
+  email: z.string().email().optional(),
+  full_name: z.string().optional(),
+  is_active: z.boolean().optional(),
+  actorId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional()
+});
 
 export async function createUser({ data }: { data: any }) {
+  const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
-  const resolvedEmail = data.email ?? resolveAuthEmail(data.username).email;
-  const actorId = data.actorId ?? null;
+  const resolvedEmail = parsedData.email ?? resolveAuthEmail(parsedData.username).email;
+  const actorId = parsedData.actorId ?? null;
 
   if (!resolvedEmail) throw new Error("Email is required for creating a user");
 
@@ -20,11 +32,11 @@ export async function createUser({ data }: { data: any }) {
 
   const { data: created, error: createError } = await client.auth.admin.createUser({
     email: resolvedEmail,
-    password: data.password,
+    password: parsedData.password,
     email_confirm: true,
     user_metadata: {
-      username: data.username,
-      full_name: data.full_name ?? data.username,
+      username: parsedData.username,
+      full_name: parsedData.full_name ?? parsedData.username,
     },
   });
   if (createError) throw createError;
@@ -35,9 +47,9 @@ export async function createUser({ data }: { data: any }) {
   const profileUpdate = await client.rpc("admin_update_profile", {
     p_user_id: userId,
     p_actor_id: actorId,
-    p_username: data.username,
-    p_full_name: data.full_name ?? null,
-    p_is_active: data.is_active ?? true,
+    p_username: parsedData.username,
+    p_full_name: parsedData.full_name ?? null,
+    p_is_active: parsedData.is_active ?? true,
   });
   if (profileUpdate.error) {
     try {
@@ -48,7 +60,7 @@ export async function createUser({ data }: { data: any }) {
     throw profileUpdate.error;
   }
 
-  if (typeof data.is_active === "boolean" && data.is_active === false) {
+  if (typeof parsedData.is_active === "boolean" && parsedData.is_active === false) {
     const { error: banError } = await client.auth.admin.updateUserById(userId, {
       ban_duration: "876000h",
     });
@@ -59,8 +71,9 @@ export async function createUser({ data }: { data: any }) {
 }
 
 export async function updateUser({ data }: { data: any }) {
+  const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
-  const { userId, username, full_name, email, is_active, actorId } = data;
+  const { userId, username, full_name, email, is_active, actorId } = parsedData;
 
   const updatePayload: Record<string, unknown> = {};
   if (email) updatePayload.email = email;
@@ -98,8 +111,9 @@ export async function updateUser({ data }: { data: any }) {
 }
 
 export async function deleteUser({ data }: { data: any }) {
+  const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
-  const { userId, actorId } = data;
+  const { userId, actorId } = parsedData;
 
   const prof = await client.rpc("admin_delete_user_data", {
     p_user_id: userId,
@@ -117,8 +131,9 @@ export async function deleteUser({ data }: { data: any }) {
 }
 
 export async function adminResetPassword({ data }: { data: any }) {
+  const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
-  const { userId } = data;
+  const { userId } = parsedData;
   
   const { data: userResult, error: userError } = await client.auth.admin.getUserById(userId);
   if (userError) throw userError;
