@@ -239,3 +239,8 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Added customer payment RPC with outstanding-balance guard and customer-level locking.
 - [x] Added Server Actions for both operations.
 - [ ] Remove/retire generic customer transaction mutation from UI after migrating all callers.
+
+### 2026-09-11 — Customer UX Alignment
+- [x] Replaced generic Debit/Credit choice in `/debts` with explicit Opening Balance / Payment operations.
+- [x] Removed unused client Supabase instance from transaction form.
+- [x] Existing `/debts` caller now targets controlled Server Actions only.
