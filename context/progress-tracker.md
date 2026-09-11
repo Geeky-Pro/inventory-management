@@ -244,3 +244,9 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Replaced generic Debit/Credit choice in `/debts` with explicit Opening Balance / Payment operations.
 - [x] Removed unused client Supabase instance from transaction form.
 - [x] Existing `/debts` caller now targets controlled Server Actions only.
+
+### 2026-09-11 — Customer Payment Method & Reconciliation
+- [x] Restricted customer payment methods to `cash`, `transfer`, `check`, `other` without introducing cash/bank accounts.
+- [x] Reconciliation check found 0 customer balance mismatches.
+- [x] Applied `20260911212500_customer_payment_methods.sql` successfully.
+- [ ] UI payment-method selector and final integration/concurrency tests.
