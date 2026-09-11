@@ -162,3 +162,11 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Added authenticated, permission-checked `void_purchase_invoice(uuid)` with transactional reversal movements and latest-price recomputation.
 - Applied and verified migrations `20260911164500_purchase_lifecycle_immutable_posted.sql` and `20260911165000_fix_purchase_immutability_trigger.sql`.
 - Application invoice editing still requires migration to the new Server Action/transaction workflow before it is safe to use for existing invoices.
+
+### 2026-09-11 — Purchase Void Server Boundary
+- Added `src/app/actions/purchases.ts` with authenticated `voidPurchase()` Server Action; actor identity comes from the current session.
+- Replaced invoice delete UI with a localized Void action and removed edit/delete controls for non-posted invoices.
+- Added reusable `ConfirmAction` and void translations.
+- Hardened DB lifecycle: direct invoice DELETE is blocked; posted->voided UPDATE is allowed only through `void_purchase_invoice()`; invoice lines remain immutable.
+- Applied migrations `20260911170500_harden_purchase_void_transition.sql` and `20260911171000_block_purchase_invoice_delete.sql` and verified application.
+- Next: move purchase creation to one transactional Server Action, then enforce/test no-negative-stock and exactly-once posting.
