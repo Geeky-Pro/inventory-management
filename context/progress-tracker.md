@@ -89,14 +89,9 @@ Scope is intentionally limited to supplier statements/balances; no full accounti
 
 ## Phase 4 — Customer Ledger
 
-**Not started.**
+**CLOSED 2026-09-12** — User completed integration testing successfully.
 
-Planned:
-- Opening balances.
-- Debit/credit transactions.
-- Payments.
-- Customer statements.
-- Balance integrity.
+Delivered: protected customer ledger foundation, opening balances, customer payments, deterministic statements, payment methods, Server Actions, idempotency/concurrency locking, and balance reconciliation.
 
 ## Phase 5 — Reports & UX
 
@@ -262,3 +257,25 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [x] Applied `20260912000500_fix_customer_ledger_rpc_privileges.sql` successfully.
 - [x] Converted controlled customer ledger RPCs to `SECURITY DEFINER`; explicit `customers.manage` authorization remains enforced inside the functions.
 - [x] Verified both RPCs are executable by `authenticated` and run as definer.
+
+### 2026-09-12 — Phase 4 Acceptance
+- [x] User tested customer opening balance successfully after RPC privilege fix.
+- [x] Customer payment flow had already been integrated through controlled Server Action/RPC path.
+- [x] Customer balance reconciliation returned 0 mismatches.
+- [x] Phase 4 closed.
+
+## Phase 5 — Reports & UX
+
+**NEXT — not yet implemented.**
+
+Scope: operational reports and UX polish for this single-shop system; no full accounting expansion.
+
+Planned first pass:
+- Inventory valuation / stock snapshot using latest purchase cost.
+- Low-stock / out-of-stock report.
+- Purchase summary and supplier balances.
+- Customer balances and customer statements.
+- Stock movement report.
+- Dashboard KPI correctness and performance.
+- Reports filters, export consistency, RTL/LTR and loading/error/empty states.
+- Audit and permission review for report access.
