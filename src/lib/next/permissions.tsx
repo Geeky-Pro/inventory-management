@@ -2,13 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { Database } from "@/integrations/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-type UserPermissionRow = Database["public"]["Tables"]["user_permissions"]["Row"];
-type UserPermissionGroupRow = Database["public"]["Tables"]["user_permission_groups"]["Row"];
 type PermissionGroupItemRow = Database["public"]["Tables"]["permission_group_items"]["Row"];
 type CurrentUserResult = {
   id: string;
@@ -95,7 +93,7 @@ export async function userHasAnyPermission(keys: string[]) {
 }
 
 export function usePermissions() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -105,7 +103,7 @@ export function usePermissions() {
       setUserId(s?.user?.id ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const query = useQuery<string[]>({
     queryKey: ["permissions", userId],
