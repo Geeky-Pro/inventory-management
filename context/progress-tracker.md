@@ -192,3 +192,10 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Verified function existence, authenticated EXECUTE privilege, and RLS on `stock_movements`.
 - No live adjustment data created.
 - Next: audit all remaining stock-changing paths and implement isolated integration/concurrency tests.
+
+### 2026-09-11 — Final Phase 2 Ledger Audit
+- Audited all repository/database references found for `stock_movements` and purchase triggers.
+- Discovered an old table-level grant that survived RLS policy removal; fixed with `20260911180500_revoke_direct_stock_ledger_writes.sql`.
+- Verified `stock_movements`: authenticated can SELECT but cannot INSERT/UPDATE/DELETE; anon cannot INSERT.
+- Purchase and void mutations remain transaction-controlled.
+- Phase 2 is ready for isolated integration/concurrency tests before transition to the next phase.
