@@ -5,85 +5,136 @@
 
 ## Last known-good reference point
 
-Latest migration recorded in the repo:
-`20260605101000_admin_profile_wrappers.sql` (June 5, 2026).
+Latest migrations recorded in the repo:
+- `20260911160000_phase1_security_hardening.sql`
+- `20260911161000_revoke_anon_public_schema_access.sql`
 
-## Completed (confirmed directly from the code)
+Both migrations were applied successfully to the Supabase project.
+
+## Current Product Scope (confirmed 2026-09-11)
+
+The system is intentionally scoped to one company/shop, one branch, and one warehouse.
+
+- Inventory management.
+- Purchase invoices only; no sales invoices for now.
+- Purchase invoice lifecycle: `posted` / `voided`; no draft state.
+- Inventory costing: latest purchase price.
+- Negative stock is not allowed.
+- Customer and supplier statements/balances.
+- No full accounting module.
+- No cash/bank-account management.
+- No barcode/QR.
+- No expiry dates, batches, or serial numbers.
+- No returns yet.
+
+These are deliberate scope decisions, not missing features.
+
+## Phase 1 — Security Hardening
+
+### Completed
+
+- [x] Audited Supabase security posture and existing permission/RLS design.
+- [x] Restricted internal admin wrappers:
+  - `admin_update_profile` → `service_role` only.
+  - `admin_delete_user_data` → `service_role` only.
+- [x] Restricted trigger-only functions from public RPC execution.
+- [x] Hardened relevant function `search_path` settings.
+- [x] Changed `prevent_currency_code_update` and `set_audit_changed_by` to `SECURITY INVOKER`.
+- [x] Removed tracked `.env` from the repository.
+- [x] Hardened `.gitignore` for environment files.
+- [x] Revoked all `anon` table/sequence/function privileges on the `public` schema.
+- [x] Applied and verified:
+  - `supabase/migrations/20260911160000_phase1_security_hardening.sql`
+  - `supabase/migrations/20260911161000_revoke_anon_public_schema_access.sql`
+
+### Phase 1 still in progress
+
+- [ ] Review `has_permission` / `is_admin` SECURITY DEFINER design and ensure callers cannot use them as arbitrary user-identity checks.
+- [ ] Complete RLS policy audit table-by-table, including INSERT/UPDATE/DELETE `WITH CHECK`.
+- [ ] Review Storage policies and confirm whether Storage is actually used by the application.
+- [ ] Determine whether `pg_graphql` is used; if not, consider disabling it rather than weakening application RLS.
+- [ ] Enable Supabase Auth leaked-password protection in project settings.
+- [ ] Rotate any real secrets that may have existed in the previously tracked `.env` (especially service-role credentials), because deleting the file does not erase Git history.
+
+### Important security decisions
+
+- Do not revoke `authenticated` access blindly: application access is protected by RLS and the fine-grained permission system.
+- Do not weaken `has_permission` / `is_admin` until every RLS/caller dependency has been reviewed.
+- Database changes must always be recorded as migrations under `supabase/migrations/` and applied to the live Supabase project.
+
+## Phase 2 — Inventory Core
+
+**Not started.** Do not begin until Phase 1 security hardening is complete.
+
+Planned review:
+- Items and units.
+- Stock movement model.
+- Current-stock consistency.
+- Atomic purchase posting.
+- Negative-stock enforcement at DB level.
+- Latest-purchase-price costing.
+- Stock adjustment/journal integrity.
+- Void/reversal behavior.
+
+## Phase 3 — Purchasing
+
+**Not started.**
+
+Planned:
+- Purchase posting.
+- Supplier balance integration.
+- Void/reversal.
+- Multi-unit purchase pricing.
+- Currency/exchange-rate snapshots.
+
+## Phase 4 — Customer Ledger
+
+**Not started.**
+
+Planned:
+- Opening balances.
+- Debit/credit transactions.
+- Payments.
+- Customer statements.
+- Balance integrity.
+
+## Phase 5 — Reports & UX
+
+**Not started.**
+
+Focus on reports that are useful for this shop rather than ERP/accounting features.
+
+## Completed (pre-existing project work)
 
 - 13 full pages under `_authenticated/`: dashboard, items, categories,
   units, suppliers, invoices (purchase), movements, customers, debts,
   users, permission-groups, audit-logs, reports, settings.
-- A fine-grained RBAC system at the individual-permission level
-  (`permissions`, `permission_groups`, `permission_group_items`,
-  `user_permission_groups`, `user_permissions`) — not fixed roles only.
-- A multi-unit system with conversion factors, built into purchase
-  invoices.
-- A multi-currency debt system (`currencies`, `exchange_rates`,
-  `customer_balances`, `debt_transactions`).
-- An audit trail (`audit_logs`) restricted to `system.admin` at both the
-  RLS and route levels together.
-- Built-in Excel and PDF export (`src/lib/excel.ts`, `src/lib/pdf.ts`).
-- Full Arabic/English bilingual RTL/LTR support (Cairo/Inter fonts,
-  custom sidebar).
-- An SSR-safe session fix for authentication.
-- Prior fixes: duplicate form submissions, conflicting RLS policies,
-  trigger stack-overflow issues.
-- A prior security incident (`.env` committed publicly) — resolved.
-- `currencies.code` is now immutable after creation (DB-level).
+- Fine-grained RBAC at the individual-permission level.
+- Multi-unit system with conversion factors.
+- Multi-currency debt system.
+- Audit trail restricted to `system.admin`.
+- Excel/PDF export.
+- Arabic/English RTL/LTR support.
+- SSR-safe authentication/session fixes.
+- Previous fixes for duplicate submissions, conflicting RLS policies,
+  and trigger stack-overflow issues.
+- `currencies.code` immutable after creation at DB level.
+- Next.js migration phases 0–6 recorded as completed in the previous tracker.
 
-## Open Questions — real gaps found during this audit, not invented
+## Open Questions / Follow-ups
 
-- **Profile avatar upload with WebP compression** was mentioned in
-  earlier notes, but no trace of it was found in this code snapshot (no
-  `webp`, no `storage.from` anywhere in `src/`). Confirm whether it lives
-  on another branch or was removed later.
-- **Documentation drift:** `/audit-logs` and `/permission-groups` exist
-  in the code but are missing from `docs/ROUTES.md`.
-- **Package manager conflict:** earlier notes mention Bun, but the file
-  actually committed in this snapshot is `package-lock.json` (npm). This
-  needs a single resolution to avoid lockfile conflicts between
-  contributors/agents.
-- **No prior progress-tracking file existed** despite substantial
-  existing documentation in `docs/` (12 files) — this file is the actual
-  starting point for live tracking.
+- Profile avatar/WebP upload is still not present in the current code snapshot.
+- `docs/ROUTES.md` may still need updating for `/audit-logs` and
+  `/permission-groups`.
+- Package manager/lockfile policy should remain consistent (npm lockfile is present).
 
-## Next — Migration to Next.js
+## Change Log
 
-Full plan: `context/specs/00-migration-to-nextjs.md` (7 phases, 0–6).
-Branch: `migration/nextjs`.
-
-| Phase | Description | Status |
-| --- | --- | --- |
-| **Phase 0** | Set up Next.js alongside the current app | ✅ **Completed** (2026-09-11) |
-| **Phase 1** | Supabase SSR layer (`@supabase/ssr` + `middleware.ts`) | ✅ **Completed** (2026-09-11) |
-| **Phase 2** | Root layout and design system | ✅ **Completed** |
-| **Phase 3** | Auth pages and authenticated shell | ✅ **Completed** |
-| **Phase 4** | Migrate all 14 pages | ✅ **Completed** (2026-09-11) |
-| Phase 5 | Server functions → Server Actions | ✅ **Completed** (2026-09-11) |
-| Phase 6 | Final cutover and cleanup | ✅ **Completed** (2026-09-11) |
-
-### Phase 4 details
-
-- [x] Group 1 (Static/Simple Data): `/profile`, `/settings`, `/units`, `/categories`
-- [x] Group 2 (Tables): `/items`, `/suppliers`, `/customers`
-- [x] Group 3 (Interactive): `/dashboard`, `/invoices`, `/movements`, `/debts`
-- [x] Group 4 (Admin): `/users`, `/permission-groups`, `/audit-logs`, `/reports` (Ready for verification)
-
-### Phase 1 details
-
-- Installed: `@supabase/ssr`.
-- Appended `NEXT_PUBLIC_SUPABASE_*` environment variables to `.env`.
-- Created Next.js specific clients: `lib/supabase/client.ts` and `lib/supabase/server.ts`.
-- Created `middleware.ts` for session refreshing via SSR.
-- Created verification page: `app/test-session/page.tsx`.
-
-### Phase 0 details
-
-- Installed: `next@16.3.4`, `@tailwindcss/postcss@4.3.3`, `postcss@8.5.28`.
-- Created: `next.config.ts`, `postcss.config.mjs`, `tsconfig.next.json`,
-  `app/layout.tsx`, `app/page.tsx`.
-- Scripts: `dev:next` (port 3001, Turbopack), `build:next`.
-- Fix: Next.js 16 auto-generates `AGENTS.md` — disabled via
-  `agentRules: false` in `next.config.ts`.
-- Verified: `npm run dev:next` works, `npm run build:next` succeeds,
-  `npm run build` (Vite) is completely unaffected.
+### 2026-09-11 — Phase 1 Security Hardening
+- Removed tracked `.env` and hardened `.gitignore`.
+- Restricted internal Supabase functions and trigger functions.
+- Hardened function search paths.
+- Revoked anonymous access to the public schema.
+- Added and applied two security migrations.
+- Verified resulting function/table privileges.
+- Phase 2 intentionally held until Phase 1 is complete.
