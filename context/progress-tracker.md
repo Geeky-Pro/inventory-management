@@ -279,3 +279,15 @@ Planned first pass:
 - Dashboard KPI correctness and performance.
 - Reports filters, export consistency, RTL/LTR and loading/error/empty states.
 - Audit and permission review for report access.
+
+### 2026-09-12 — Legacy Code & File Cleanup Audit
+- [x] Migrated ItemUnitsDialog.tsx from legacy integrations/supabase/client to lib/supabase/client.
+- [x] Migrated UserProfileDialog.tsx to lib/supabase/client and lib/next/permissions.
+- [x] Removed unused legacy src/integrations/supabase/client.ts.
+- [x] Removed unused legacy src/integrations/supabase/client.server.ts.
+- [x] Removed unused legacy src/lib/permissions.tsx.
+- [x] Removed temporary /test-session and /test-layout exceptions from middleware; no matching routes were found.
+- [x] Refreshed generated src/integrations/supabase/types.ts from the live Supabase schema; it now includes customer ledger columns, views, and RPCs.
+- [x] Removed duplicate standalone scripts/test-create-user.js; retained the ESM .mjs version.
+- [x] Updated stale Supabase architecture documentation to point to the current lib/supabase/* clients.
+- [ ] Run full lint/build and perform a final repository-wide unused-symbol scan before declaring cleanup complete.
