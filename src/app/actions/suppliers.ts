@@ -19,9 +19,9 @@ export async function createSupplier(input: SupplierInput) {
     name: input.name.trim(), phone: input.phone ?? null, notes: input.notes ?? null,
     default_currency: input.defaultCurrency ?? null, default_payment_type: input.defaultPaymentType ?? "cash",
     created_by: user.user.id,
-  }).select("id").single();
+  }).select("*").single();
   if (error) return { ok: false, error: error.message };
-  return { ok: true, id: data.id };
+  return { ok: true, id: data.id, supplier: data };
 }
 
 export async function updateSupplier(id: string, input: SupplierInput) {
@@ -52,6 +52,13 @@ export async function addSupplierOpeningBalance(input: {
   exchangeRate: number; transactionDate: string; notes?: string;
 }) {
   const supabase = await createClient();
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) return { ok: false, error: "Authentication required" };
+  if (!input.operationId || !input.supplierId) return { ok: false, error: "Operation and supplier are required" };
+  if (!input.transactionDate) return { ok: false, error: "Transaction date is required" };
+  if (!Number.isFinite(input.amountLocal) || input.amountLocal <= 0 || !Number.isFinite(input.exchangeRate) || input.exchangeRate <= 0) {
+    return { ok: false, error: "Amount and exchange rate must be positive" };
+  }
   const { data, error } = await supabase.rpc("add_supplier_opening_balance", {
     _operation_id: input.operationId, _supplier_id: input.supplierId, _amount_local: input.amountLocal,
     _currency_code: input.currencyCode, _exchange_rate: input.exchangeRate,
@@ -66,6 +73,17 @@ export async function recordSupplierPayment(input: {
   exchangeRate: number; transactionDate: string; paymentMethod: string; notes?: string;
 }) {
   const supabase = await createClient();
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) return { ok: false, error: "Authentication required" };
+  const allowedMethods = ["cash", "transfer", "check", "other"] as const;
+  if (!allowedMethods.includes(input.paymentMethod as (typeof allowedMethods)[number])) {
+    return { ok: false, error: "Invalid payment method" };
+  }
+  if (!input.operationId || !input.supplierId) return { ok: false, error: "Operation and supplier are required" };
+  if (!input.transactionDate) return { ok: false, error: "Transaction date is required" };
+  if (!Number.isFinite(input.amountLocal) || input.amountLocal <= 0 || !Number.isFinite(input.exchangeRate) || input.exchangeRate <= 0) {
+    return { ok: false, error: "Amount and exchange rate must be positive" };
+  }
   const { data, error } = await supabase.rpc("pay_supplier", {
     _operation_id: input.operationId, _supplier_id: input.supplierId, _amount_local: input.amountLocal,
     _currency_code: input.currencyCode, _exchange_rate: input.exchangeRate,
