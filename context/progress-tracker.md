@@ -303,3 +303,13 @@ Planned first pass:
 - [x] Updated environment, quickstart, deployment, troubleshooting, README, and architecture docs to Next.js conventions.
 - [x] Repository search found no active Vite runtime APIs (import.meta.glob, @vitejs, vite/client, ReactDOM createRoot) and no Vite config/entry files.
 - [ ] Run npm install, npm run lint, npm run build, and npm test locally to validate the migrated project.
+
+
+### 2026-09-12 — Supplier Ledger UI
+- [x] Added supplier balance column to `/suppliers` using the derived `supplier_balances` read model.
+- [x] Added supplier statement route `/suppliers/[id]` backed by `supplier_statement`.
+- [x] Added controlled supplier opening-balance and payment dialogs using Server Actions/RPCs with operation UUIDs.
+- [x] Added `src/app/actions/suppliers.ts` for supplier CRUD and ledger mutations; actor identity is derived from the authenticated server session for CRUD metadata.
+- [x] Added Arabic/English supplier-ledger translations.
+- [x] Updated route and technical/context documentation.
+- [ ] Final browser integration/concurrency acceptance tests remain before formal Phase 3 closure.
