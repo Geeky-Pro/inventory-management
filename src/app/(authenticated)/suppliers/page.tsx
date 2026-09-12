@@ -38,9 +38,18 @@ export default function SuppliersPage() {
   const { data: rows = [] } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("supplier_balances").select("*").order("name");
-      if (error) throw error;
-      return (data ?? []) as SupplierRow[];
+      const [{ data: suppliers, error: suppliersError }, { data: balances, error: balancesError }] =
+        await Promise.all([
+          supabase.from("suppliers").select("*").order("name"),
+          supabase.from("supplier_balances").select("supplier_id,balance"),
+        ]);
+      if (suppliersError) throw suppliersError;
+      if (balancesError) throw balancesError;
+      const balanceMap = new Map((balances ?? []).map((r) => [r.supplier_id, Number(r.balance ?? 0)]));
+      return (suppliers ?? []).map((r) => ({
+        ...r,
+        balance: balanceMap.get(r.id) ?? 0,
+      })) as SupplierRow[];
     },
   });
   const refetch = () => qc.invalidateQueries({ queryKey: ["suppliers"] });
