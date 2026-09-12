@@ -17,7 +17,7 @@ import { usePermissions } from "@/lib/next/permissions";
 import { fmtDate, fmtNum, todayStr } from "@/lib/format";
 import { Download, FileText, Plus, ArrowLeft } from "lucide-react";
 import { exportToExcel } from "@/lib/excel";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { addSupplierOpeningBalance, recordSupplierPayment } from "@/app/actions/suppliers";
 
@@ -62,7 +62,16 @@ export default function SupplierStatementPage() {
 
   if (!supplier) return <div className="p-6">{t("no_data")}</div>;
 
-  const exportRows = rows as Tx[];
+  const normalizedRows: Tx[] = useMemo(() => rows.flatMap((r) => {
+    if (!r.id || !r.supplier_id || !r.transaction_date || !r.transaction_type ||
+        r.amount == null || !r.currency_code || r.amount_local == null || r.running_balance_local == null) {
+      return [];
+    }
+    if (r.transaction_type !== "debit" && r.transaction_type !== "credit") return [];
+    return [{ ...r, transaction_type: r.transaction_type, amount: Number(r.amount),
+      amount_local: Number(r.amount_local), running_balance_local: Number(r.running_balance_local) } as Tx];
+  }), [rows]);
+  const exportRows = normalizedRows;
   const exportStatement = () => exportToExcel(exportRows.map(r => ({
     date: r.transaction_date, type: r.transaction_type, amount: r.amount, currency: r.currency_code,
     amount_local: r.amount_local, balance: r.running_balance_local, invoice_ref: r.invoice_ref,
@@ -82,7 +91,7 @@ export default function SupplierStatementPage() {
         <div className="rounded-md border bg-card p-4"><div className="text-sm text-muted-foreground">{t("total_credit")}</div><strong>{fmtNum(Number(balance?.total_credit ?? 0),2)}</strong></div>
         <div className="rounded-md border bg-card p-4"><div className="text-sm text-muted-foreground">{t("balance")}</div><strong>{fmtNum(Number(balance?.balance ?? 0),2)}</strong></div>
       </div>
-      <DataTable rows={rows} columns={[
+      <DataTable rows={normalizedRows} columns={[
         {key:"d",header:t("date"),cell:(r:Tx)=>fmtDate(r.transaction_date)},
         {key:"t",header:t("transaction_type"),cell:(r:Tx)=>r.transaction_type==="debit"?t("debit"):t("credit_d")},
         {key:"a",header:t("amount"),cell:(r:Tx)=>`${fmtNum(Number(r.amount),2)} ${r.currency_code}`},
@@ -98,23 +107,38 @@ export default function SupplierStatementPage() {
 }
 
 function LedgerDialog({kind,supplierId,currencies,onClose,onDone}:{kind:string;supplierId:string;currencies:Array<{code:string;is_base?:boolean}>;onClose:()=>void;onDone:()=>void}) {
-  const {t}=useI18n(); const [amount,setAmount]=useState(0); const [currency,setCurrency]=useState("YER");
-  const [rate,setRate]=useState(1); const [date,setDate]=useState(todayStr()); const [method,setMethod]=useState("cash"); const [notes,setNotes]=useState("");
+  const {t}=useI18n();
+  const [amount,setAmount]=useState(0);
+  const [currency,setCurrency]=useState("YER");
+  const [rate,setRate]=useState(1);
+  const [date,setDate]=useState(todayStr());
+  const [method,setMethod]=useState("cash");
+  const [notes,setNotes]=useState("");
+  const [pending,setPending]=useState(false);
+  const [operationId,setOperationId]=useState(() => crypto.randomUUID());
+  const baseCurrency = currencies.find(c=>c.is_base)?.code;
   if(!kind) return null;
-  const submit=async()=>{ if(amount<=0||rate<=0){toast.error(t("invalid_amount"));return;} const operationId=crypto.randomUUID();
+  const submit=async()=>{
+    if(pending) return;
+    if(amount<=0||rate<=0||!date){toast.error(!date?t("field_required"):t("invalid_amount"));return;}
+    if(baseCurrency && currency===baseCurrency && rate!==1){toast.error(t("invalid_amount"));return;}
+    setPending(true);
     const result=kind==="opening"
       ? await addSupplierOpeningBalance({operationId,supplierId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,notes})
       : await recordSupplierPayment({operationId,supplierId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,paymentMethod:method,notes});
-    if(!result.ok){toast.error(result.error);return;} toast.success(t("save_success")); onClose(); onDone(); };
+    if(!result.ok){toast.error(result.error);setPending(false);return;}
+    toast.success(t("save_success")); onClose(); onDone(); setPending(false);
+    setOperationId(crypto.randomUUID());
+  };
   return <Dialog open={!!kind} onOpenChange={o=>!o&&onClose()}><DialogContent><DialogHeader><DialogTitle>{kind==="opening"?t("opening_balance"):t("supplier_payment")}</DialogTitle></DialogHeader>
     <div className="grid gap-3 sm:grid-cols-2">
       <div><Label>{t("date")}</Label><DatePicker value={date} onValueChange={setDate}/></div>
       <div><Label>{t("amount")}</Label><Input type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(Number(e.target.value))}/></div>
       <div><Label>{t("currency")}</Label><Select value={currency} onValueChange={v=>{setCurrency(v);if(v===currencies.find(c=>c.is_base)?.code)setRate(1)}}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{currencies.map((c)=><SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>)}</SelectContent></Select></div>
-      <div><Label>{t("exchange_rate")}</Label><Input type="number" min="0" step="0.0001" value={rate} onChange={e=>setRate(Number(e.target.value))}/></div>
+      <div><Label>{t("exchange_rate")}</Label><Input type="number" min="0" step="0.0001" value={rate} disabled={!!baseCurrency && currency===baseCurrency} onChange={e=>setRate(Number(e.target.value))}/></div>
       {kind==="payment"&&<div><Label>{t("payment_method")}</Label><Select value={method} onValueChange={setMethod}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{["cash","transfer","check","other"].map(v=><SelectItem key={v} value={v}>{v==="cash"?t("cash"):v==="transfer"?t("transfer"):v==="check"?t("check"):t("other")}</SelectItem>)}</SelectContent></Select></div>}
       <div className="sm:col-span-2"><Label>{t("notes")}</Label><Input value={notes} onChange={e=>setNotes(e.target.value)}/></div>
     </div>
-    <DialogFooter><Button variant="outline" onClick={onClose}>{t("cancel")}</Button><Button onClick={submit}>{t("save")}</Button></DialogFooter>
+    <DialogFooter><Button variant="outline" onClick={onClose}>{t("cancel")}</Button><Button onClick={submit} disabled={pending}>{pending ? t("saving") : t("save")}</Button></DialogFooter>
   </DialogContent></Dialog>;
 }
