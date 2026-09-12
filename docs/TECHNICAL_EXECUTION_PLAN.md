@@ -202,7 +202,15 @@ Implemented the application layer for the supplier ledger foundation:
 - `/suppliers` now displays the derived supplier balance from `supplier_balances`.
 - `/suppliers/[id]` displays the deterministic `supplier_statement` read model with running balance and exports.
 - Supplier opening balances and payments use the existing idempotent RPCs through `src/app/actions/suppliers.ts`.
-- Supplier CRUD mutations are also routed through the Server Action boundary.
+- Supplier CRUD mutations are routed through the Server Action boundary, including the invoice quick-create supplier flow.
 - Arabic/English translations were added for supplier statements, payments, opening balances, payment methods, and related actions.
 
 The database foundation remains unchanged; this step only connects the existing Phase 3 ledger capabilities to the UI.
+
+
+### Phase 3 review fixes — 2026-09-12
+
+- Fixed the supplier statement read model so each ledger transaction appears exactly once and its running balance is calculated without a multiplying self-join.
+- Hardened supplier payment validation at both the Server Action and database RPC boundaries.
+- Added transaction-date validation, base-currency exchange-rate locking, and pending-state protection for ledger submissions.
+- Kept the operation UUID stable for retries while generating a new operation ID for each new dialog submission.
