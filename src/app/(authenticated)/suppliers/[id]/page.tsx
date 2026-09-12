@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
 import { usePermissions } from "@/lib/next/permissions";
 import { fmtDate, fmtNum, todayStr } from "@/lib/format";
-import { Download, FileText, Plus, ArrowLeft } from "lucide-react";
+import { Download, Plus, ArrowLeft } from "lucide-react";
 import { exportToExcel } from "@/lib/excel";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -60,8 +60,6 @@ export default function SupplierStatementPage() {
   };
   useEffect(() => { if (action === "opening" || action === "payment") setDialog(action); }, [action]);
 
-  if (!supplier) return <div className="p-6">{t("no_data")}</div>;
-
   const normalizedRows: Tx[] = useMemo(() => rows.flatMap((r) => {
     if (!r.id || !r.supplier_id || !r.transaction_date || !r.transaction_type ||
         r.amount == null || !r.currency_code || r.amount_local == null || r.running_balance_local == null) {
@@ -77,6 +75,8 @@ export default function SupplierStatementPage() {
     amount_local: r.amount_local, balance: r.running_balance_local, invoice_ref: r.invoice_ref,
     payment_method: r.payment_method, notes: r.notes,
   })), "supplier_statement");
+
+  if (!supplier) return <div className="p-6">{t("no_data")}</div>;
 
   return (
     <div>
