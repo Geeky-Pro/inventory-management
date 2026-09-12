@@ -43,3 +43,10 @@ final decision.
   dedicated backdrop for mobile.
 - Any new layout must be tested in both directions before merging, not
   just the Arabic one.
+
+
+## Supplier ledger UI
+- `/suppliers` shows the derived supplier balance and exposes statement/navigation actions.
+- `/suppliers/[id]` is the supplier statement page with debit, credit, running balance, opening balance, and payment operations.
+- Opening balance and payment dialogs use the existing shadcn/Radix primitives and Arabic/English i18n.
+- Supplier ledger mutations are never performed directly from the browser; they call Server Actions.
