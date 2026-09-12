@@ -31,3 +31,5 @@
 
 - عمليات الحماية (guard) تتم في `middleware.ts` في جذر المشروع، والذي يمنع الوصول للصفحات المحمية بدون تسجيل دخول، ويقوم بتجديد جلسة Supabase بشكل آمن.
 - دوال الواجهة الخلفية (Backend logic) تم عزلها داخل `src/app/actions` لتعمل كـ Next.js Server Actions بصلاحيات عالية وأمان.
+
+- `/suppliers/[id]` — `src/app/(authenticated)/suppliers/[id]/page.tsx` (supplier statement)
