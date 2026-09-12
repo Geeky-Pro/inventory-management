@@ -194,3 +194,15 @@ Phase 2 is now ready for isolated integration/concurrency testing. Do not add ne
 ## Phase 4 — Customer Ledger
 
 Scope mirrors the supplier ledger without introducing full accounting: customer opening balances, customer debt transactions, customer payments, customer statements, and balance integrity.
+
+
+## Phase 3 UI completion — 2026-09-12
+
+Implemented the application layer for the supplier ledger foundation:
+- `/suppliers` now displays the derived supplier balance from `supplier_balances`.
+- `/suppliers/[id]` displays the deterministic `supplier_statement` read model with running balance and exports.
+- Supplier opening balances and payments use the existing idempotent RPCs through `src/app/actions/suppliers.ts`.
+- Supplier CRUD mutations are also routed through the Server Action boundary.
+- Arabic/English translations were added for supplier statements, payments, opening balances, payment methods, and related actions.
+
+The database foundation remains unchanged; this step only connects the existing Phase 3 ledger capabilities to the UI.
