@@ -117,6 +117,9 @@ function LedgerDialog({kind,supplierId,currencies,onClose,onDone}:{kind:string;s
   const [pending,setPending]=useState(false);
   const [operationId,setOperationId]=useState(() => crypto.randomUUID());
   const baseCurrency = currencies.find(c=>c.is_base)?.code;
+  useEffect(() => {
+    if (kind) setOperationId(crypto.randomUUID());
+  }, [kind]);
   if(!kind) return null;
   const submit=async()=>{
     if(pending) return;
@@ -128,7 +131,6 @@ function LedgerDialog({kind,supplierId,currencies,onClose,onDone}:{kind:string;s
       : await recordSupplierPayment({operationId,supplierId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,paymentMethod:method,notes});
     if(!result.ok){toast.error(result.error);setPending(false);return;}
     toast.success(t("save_success")); onClose(); onDone(); setPending(false);
-    setOperationId(crypto.randomUUID());
   };
   return <Dialog open={!!kind} onOpenChange={o=>!o&&onClose()}><DialogContent><DialogHeader><DialogTitle>{kind==="opening"?t("opening_balance"):t("supplier_payment")}</DialogTitle></DialogHeader>
     <div className="grid gap-3 sm:grid-cols-2">
