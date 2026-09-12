@@ -32,6 +32,7 @@ import { Plus, Eye, Printer, Pencil, X, Check, Loader2, Trash2 } from "lucide-re
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { voidPurchase } from "@/app/actions/purchases";
+import { createSupplier } from "@/app/actions/suppliers";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function InvoicesPage() {
@@ -202,21 +203,20 @@ function SupplierForm({
   const [notes, setNotes] = useState("");
   const [default_currency, setDefaultCurrency] = useState("_");
   const [default_payment_type, setDefaultPaymentType] = useState("cash");
-  const supabase = createClient();
-
   const submitSup = async () => {
-    const { data: u } = await supabase.auth.getUser();
-    const payload: any = { name, phone: phone || null, notes: notes || null };
-    payload.default_currency = default_currency === "_" ? null : default_currency;
-    payload.default_payment_type = default_payment_type;
-    if (u.user?.id) payload.created_by = u.user.id;
+    if (!name.trim()) { toast.error(t("field_required")); return; }
+    const result = await createSupplier({
+      name: name.trim(),
+      phone: phone || null,
+      notes: notes || null,
+      defaultCurrency: default_currency === "_" ? null : default_currency,
+      defaultPaymentType: default_payment_type,
+    });
 
-    const { data: created, error } = await supabase.from("suppliers").insert(payload).select().single();
-
-    if (error) { toast.error(error.message); return; }
+    if (!result.ok) { toast.error(result.error); return; }
     toast.success(t("save_success"));
     onOpenChange(false);
-    onCreated(created);
+    onCreated(result.supplier);
     qc.invalidateQueries({ queryKey: ["suppliers"] });
     setName(""); setPhone(""); setNotes(""); setDefaultCurrency("_"); setDefaultPaymentType("cash");
   };
