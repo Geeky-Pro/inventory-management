@@ -16,6 +16,7 @@ import { useI18n } from "@/lib/i18n";
 import { usePermissions } from "@/lib/next/permissions";
 import { fmtDate, fmtNum, todayStr } from "@/lib/format";
 import { Download, FileText, Plus, ArrowLeft } from "lucide-react";
+import { exportToExcel } from "@/lib/excel";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { addSupplierOpeningBalance, recordSupplierPayment } from "@/app/actions/suppliers";
@@ -36,6 +37,10 @@ export default function SupplierStatementPage() {
   const qc = useQueryClient();
   const supabase = createClient();
   const [dialog, setDialog] = useState(action === "payment" ? "payment" : "");
+  const { data: currencies = [] } = useQuery({
+    queryKey: ["currencies"],
+    queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
+  });
   const { data: supplier } = useQuery({
     queryKey: ["supplier", supplierId],
     queryFn: async () => (await supabase.from("suppliers").select("*").eq("id", supplierId).single()).data,
@@ -58,16 +63,11 @@ export default function SupplierStatementPage() {
   if (!supplier) return <div className="p-6">{t("no_data")}</div>;
 
   const exportRows = rows as Tx[];
-  const exportStatement = () => {
-    const payload = exportRows.map(r => ({
-      date: r.transaction_date, type: r.transaction_type, amount: r.amount,
-      currency: r.currency_code, amount_local: r.amount_local, balance: r.running_balance_local,
-      invoice_ref: r.invoice_ref, payment_method: r.payment_method, notes: r.notes,
-    }));
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob); const a = document.createElement("a");
-    a.href = url; a.download = `supplier_statement_${supplierId}.json`; a.click(); URL.revokeObjectURL(url);
-  };
+  const exportStatement = () => exportToExcel(exportRows.map(r => ({
+    date: r.transaction_date, type: r.transaction_type, amount: r.amount, currency: r.currency_code,
+    amount_local: r.amount_local, balance: r.running_balance_local, invoice_ref: r.invoice_ref,
+    payment_method: r.payment_method, notes: r.notes,
+  })), "supplier_statement");
 
   return (
     <div>
@@ -92,15 +92,14 @@ export default function SupplierStatementPage() {
         {key:"pm",header:t("payment_method"),cell:(r:Tx)=>r.payment_method?t(r.payment_method as never):"-"},
         {key:"n",header:t("notes"),cell:(r:Tx)=>r.notes??"-"},
       ]}/>
-      <LedgerDialog kind={dialog} supplierId={supplierId} currenciesQuery={supabase.from("currencies").select("*")} onClose={()=>setDialog("")} onDone={refetch}/>
+      <LedgerDialog kind={dialog} supplierId={supplierId} currencies={currencies} onClose={()=>setDialog("")} onDone={refetch}/>
     </div>
   );
 }
 
-function LedgerDialog({kind,supplierId,currenciesQuery,onClose,onDone}:{kind:string;supplierId:string;currenciesQuery:PromiseLike<any>;onClose:()=>void;onDone:()=>void}) {
+function LedgerDialog({kind,supplierId,currencies,onClose,onDone}:{kind:string;supplierId:string;currencies:Array<{code:string;is_base?:boolean}>;onClose:()=>void;onDone:()=>void}) {
   const {t}=useI18n(); const [amount,setAmount]=useState(0); const [currency,setCurrency]=useState("YER");
   const [rate,setRate]=useState(1); const [date,setDate]=useState(todayStr()); const [method,setMethod]=useState("cash"); const [notes,setNotes]=useState("");
-  const {data}=useQuery({queryKey:["currencies"],queryFn:async()=> (await currenciesQuery).data ?? []});
   if(!kind) return null;
   const submit=async()=>{ if(amount<=0||rate<=0){toast.error(t("invalid_amount"));return;} const operationId=crypto.randomUUID();
     const result=kind==="opening"
@@ -111,9 +110,9 @@ function LedgerDialog({kind,supplierId,currenciesQuery,onClose,onDone}:{kind:str
     <div className="grid gap-3 sm:grid-cols-2">
       <div><Label>{t("date")}</Label><DatePicker value={date} onValueChange={setDate}/></div>
       <div><Label>{t("amount")}</Label><Input type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(Number(e.target.value))}/></div>
-      <div><Label>{t("currency")}</Label><Select value={currency} onValueChange={v=>{setCurrency(v);if(v===data?.find((c:any)=>c.is_base)?.code)setRate(1)}}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{(data??[]).map((c:any)=><SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>)}</SelectContent></Select></div>
+      <div><Label>{t("currency")}</Label><Select value={currency} onValueChange={v=>{setCurrency(v);if(v===currencies.find(c=>c.is_base)?.code)setRate(1)}}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{currencies.map((c)=><SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>)}</SelectContent></Select></div>
       <div><Label>{t("exchange_rate")}</Label><Input type="number" min="0" step="0.0001" value={rate} onChange={e=>setRate(Number(e.target.value))}/></div>
-      {kind==="payment"&&<div><Label>{t("payment_method")}</Label><Select value={method} onValueChange={setMethod}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{["cash","transfer","check","other"].map(v=><SelectItem key={v} value={v}>{t(v as never)}</SelectItem>)}</SelectContent></Select></div>}
+      {kind==="payment"&&<div><Label>{t("payment_method")}</Label><Select value={method} onValueChange={setMethod}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{["cash","transfer","check","other"].map(v=><SelectItem key={v} value={v}>{v==="cash"?t("cash"):v==="transfer"?t("transfer"):v==="check"?t("check"):t("other")}</SelectItem>)}</SelectContent></Select></div>}
       <div className="sm:col-span-2"><Label>{t("notes")}</Label><Input value={notes} onChange={e=>setNotes(e.target.value)}/></div>
     </div>
     <DialogFooter><Button variant="outline" onClick={onClose}>{t("cancel")}</Button><Button onClick={submit}>{t("save")}</Button></DialogFooter>
