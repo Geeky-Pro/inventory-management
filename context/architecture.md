@@ -55,3 +55,10 @@
 ## Documentation drift note
 
 The API routes and file routing follow the Next.js App Router structure in `src/app/`. Make sure any structural documentation stays in sync with Next.js conventions.
+
+
+## Supplier ledger UI boundary
+- Supplier balances are read from `supplier_balances`; supplier statements are read from `supplier_statement`.
+- Supplier opening balances and payments must use `src/app/actions/suppliers.ts`, which delegates to idempotent database RPCs.
+- The browser does not write `supplier_transactions` directly.
+- Supplier CRUD mutations also use the Server Action boundary; database RLS remains the authorization backstop.
