@@ -58,8 +58,6 @@ CREATE INDEX IF NOT EXISTS audit_logs_changed_by_idx ON public.audit_logs(change
 CREATE INDEX IF NOT EXISTS purchase_invoice_items_created_by_idx ON public.purchase_invoice_items(created_by);
 CREATE INDEX IF NOT EXISTS purchase_invoice_items_updated_by_idx ON public.purchase_invoice_items(updated_by);
 CREATE INDEX IF NOT EXISTS suppliers_default_currency_idx ON public.suppliers(default_currency);
-CREATE INDEX IF NOT EXISTS profiles_created_by_idx ON public.profiles(created_by);
-CREATE INDEX IF NOT EXISTS profiles_updated_by_idx ON public.profiles(updated_by);
 CREATE INDEX IF NOT EXISTS user_permissions_created_by_idx ON public.user_permissions(created_by);
 CREATE INDEX IF NOT EXISTS user_permission_groups_created_by_idx ON public.user_permission_groups(created_by);
 CREATE INDEX IF NOT EXISTS item_images_created_by_idx ON public.item_images(created_by);
