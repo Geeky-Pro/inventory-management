@@ -313,3 +313,26 @@ Planned first pass:
 - [x] Added Arabic/English supplier-ledger translations.
 - [x] Updated route and technical/context documentation.
 - [ ] Final browser integration/concurrency acceptance tests remain before formal Phase 3 closure.
+### 2026-09-15 — Customer Statement Read-Model Fix
+- [x] Replaced the legacy self-JOIN running-balance calculation in `customer_statement` with a deterministic window function over `transaction_date`, `created_at`, and `id`.
+- [x] Preserved the existing statement column/API shape used by the application and exports.
+- [x] Added migration `supabase/migrations/20260915000000_fix_customer_statement_read_model.sql`.
+- [x] Applied the migration to the live Supabase database.
+- [x] Verified live row count and uniqueness: 1 debt transaction -> 1 statement row; no NULL running balances.
+- [x] Verified the running balance against an independent aggregation: both returned 50,000 for the current test row.
+- [x] Supplier statement already uses the same one-row-per-transaction + window-function pattern.
+- [x] This closes the database-side Statement Duplication / Inflated Balance defect for both customer and supplier statement read models.
+- [ ] Re-run application/browser statement and export acceptance tests with representative opening-balance + payment + purchase/debit data.
+
+## Current checkpoint — 2026-09-15
+- Phase 2: **CLOSED**.
+- Phase 3 Supplier Ledger: **FUNCTIONALLY IMPLEMENTED; final acceptance/verification remains**.
+- Phase 4 Customer Ledger: **CLOSED**, with the customer statement read-model corrected afterward as a hardening fix.
+- Legacy/Vite cleanup: **IMPLEMENTED; local lint/build/test validation remains**.
+- Phase 5 Reports & UX: **NEXT**. Do not expand into full accounting; first finish the remaining acceptance gates and then begin reports/UX from a verified baseline.
+
+### Next execution order
+1. Run representative customer/supplier statement + export acceptance tests.
+2. Run local `npm run lint`, `npm run build`, and `npm test` and record the results.
+3. Resolve any remaining correctness/security issues found by those checks.
+4. Start Phase 5 with reports/UX, beginning with inventory valuation, low/out-of-stock, purchase/supplier, customer statements/balances, and stock-movement reporting.
