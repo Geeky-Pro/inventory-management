@@ -62,3 +62,22 @@ The API routes and file routing follow the Next.js App Router structure in `src/
 - Supplier opening balances and payments must use `src/app/actions/suppliers.ts`, which delegates to idempotent database RPCs.
 - The browser does not write `supplier_transactions` directly.
 - Supplier CRUD mutations also use the Server Action boundary; database RLS remains the authorization backstop.
+
+## Customer ledger boundary
+- Customer balances are derived from the customer ledger/read models; direct arbitrary balance edits are not an application mutation path.
+- Customer opening balances and payments use `src/app/actions/customers.ts` and protected database RPCs.
+- The browser does not write `debt_transactions` directly.
+- `customer_statement` is the authoritative statement read model for customer ledger UI/export consumers.
+
+## Statement read-model invariant
+- `customer_statement` and `supplier_statement` must return exactly one row per underlying ledger transaction.
+- Running balances are computed with PostgreSQL window functions ordered by `transaction_date`, `created_at`, and `id`.
+- Avoid self-JOIN or other row-multiplying approaches for running-balance calculation.
+- The application must consume the read models as-is rather than reconstructing running balances with client-side joins.
+- Migration `20260915000000_fix_customer_statement_read_model.sql` records the customer read-model correction and has been applied to the live database.
+
+## Current delivery checkpoint — 2026-09-15
+- Phase 2 inventory core: closed.
+- Phase 3 supplier ledger: UI + DB foundation implemented; final acceptance remains.
+- Phase 4 customer ledger: closed; statement read model subsequently hardened to remove duplication/inflated-balance risk.
+- Phase 5 reports & UX: next implementation phase.
