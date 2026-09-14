@@ -50,3 +50,16 @@ final decision.
 - `/suppliers/[id]` is the supplier statement page with debit, credit, running balance, opening balance, and payment operations.
 - Opening balance and payment dialogs use the existing shadcn/Radix primitives and Arabic/English i18n.
 - Supplier ledger mutations are never performed directly from the browser; they call Server Actions.
+
+## Customer ledger UI
+- Customer debt/ledger operations are exposed through controlled Server Actions; browser code does not directly mutate `debt_transactions`.
+- Customer statements use the `customer_statement` read model and preserve the existing statement data shape for the UI and exports.
+- The `customer_statement` read model is one-row-per-ledger-transaction and computes running balance with a deterministic window order: `transaction_date`, `created_at`, `id`.
+- Customer opening balance and payment flows use explicit operations and supported payment methods.
+
+## Statement / ledger UX invariants
+- Never introduce client-side joins that multiply ledger rows when rendering or exporting statements.
+- Statement rows must map 1:1 to ledger transactions.
+- Running balances must use the database read model as the authoritative value; the UI should format rather than recalculate it.
+- Supplier and customer statement pages should remain consistent in layout, ordering, running-balance semantics, export behavior, and RTL/LTR support.
+- New ledger dialogs must disable submission while pending, validate dates/amounts, and keep retry idempotency behavior intact.
