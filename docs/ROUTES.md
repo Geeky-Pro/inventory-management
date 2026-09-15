@@ -33,3 +33,4 @@
 - دوال الواجهة الخلفية (Backend logic) تم عزلها داخل `src/app/actions` لتعمل كـ Next.js Server Actions بصلاحيات عالية وأمان.
 
 - `/suppliers/[id]` — `src/app/(authenticated)/suppliers/[id]/page.tsx` (supplier statement)
+- `/customers/[id]` — `src/app/(authenticated)/customers/[id]/page.tsx` (customer statement)

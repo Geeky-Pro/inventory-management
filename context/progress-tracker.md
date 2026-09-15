@@ -6,6 +6,7 @@
 ## Last known-good reference point
 
 Latest migrations recorded in the repo:
+
 - `20260911160000_phase1_security_hardening.sql`
 - `20260911161000_revoke_anon_public_schema_access.sql`
 
@@ -62,7 +63,6 @@ These are deliberate scope decisions, not missing features.
 - Do not weaken `has_permission` / `is_admin` until every RLS/caller dependency has been reviewed.
 - Database changes must always be recorded as migrations under `supabase/migrations/` and applied to the live Supabase project.
 
-
 ## Phase 2 — Inventory Core
 
 **CLOSED 2026-09-11** — User completed integration testing successfully.
@@ -85,7 +85,6 @@ Scope is intentionally limited to supplier statements/balances; no full accounti
 - [x] Supplier statement/read model.
 - [ ] Idempotency/concurrency safeguards.
 - [ ] Integration tests and reconciliation.
-
 
 ## Phase 4 — Customer Ledger
 
@@ -126,18 +125,21 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 ## Change Log
 
 ### 2026-09-11 — Inventory Mutation Trace
+
 - Confirmed live triggers: purchase line INSERT -> stock movement; purchase line DELETE -> stock reversal; no purchase-line UPDATE stock trigger.
 - Confirmed the invoice editor deletes and reinserts lines during edit, which fires those triggers and can mutate stock unintentionally.
 - No data was changed during this trace; live `stock_movements` count observed: 4.
 - Decision: replace line-level stock side effects with explicit atomic purchase posting/voiding in Phase 2.
 
 ### 2026-09-11 — Technical Architecture Audit
+
 - Audited the live schema, relationships, RLS model, functions/triggers, indexes, migrations, and application data-access patterns.
 - Identified P0 inventory integrity risks around competing item_stock/stock_movements paths and invoice-item update behavior.
 - Identified P1 server-action authorization and audit-actor issues for follow-up.
 - Added `docs/TECHNICAL_EXECUTION_PLAN.md` with the implementation plan, invariants, migrations, Server Actions, tests, and execution order.
 
 ### 2026-09-11 — Phase 1 Security Hardening
+
 - Bound permission checks to `auth.uid()` via `current_user_has_permission(text)` and migrated existing public/storage policies to it.
 - Revoked `authenticated` EXECUTE on `has_permission(uuid,text)` and `is_admin(uuid)`; retained them for trusted `service_role` compatibility.
 - Added and applied `supabase/migrations/20260911162000_session_bound_permission_checks.sql`.
@@ -150,6 +152,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Phase 2 intentionally held until Phase 1 is complete.
 
 ### 2026-09-11 — Phase 2 Purchase Lifecycle Foundation
+
 - Added `purchase_invoices.status` (`posted`/`voided`) plus void metadata; existing invoices are treated as posted.
 - Added purchase-line quantity/price integrity checks.
 - Added `purchase_void` stock movement type.
@@ -159,6 +162,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Application invoice editing still requires migration to the new Server Action/transaction workflow before it is safe to use for existing invoices.
 
 ### 2026-09-11 — Purchase Void Server Boundary
+
 - Added `src/app/actions/purchases.ts` with authenticated `voidPurchase()` Server Action; actor identity comes from the current session.
 - Replaced invoice delete UI with a localized Void action and removed edit/delete controls for non-posted invoices.
 - Added reusable `ConfirmAction` and void translations.
@@ -167,6 +171,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Next: move purchase creation to one transactional Server Action, then enforce/test no-negative-stock and exactly-once posting.
 
 ### 2026-09-11 — Transactional Purchase Creation
+
 - Added `create_purchase_invoice(...)` RPC as the single transactional purchase creation boundary.
 - Validates authenticated user, `invoices.manage`, invoice number uniqueness, totals, line quantities/prices/conversion, item existence, and item-unit ownership.
 - Updated invoice creation UI to call the transaction RPC instead of separate header/line inserts.
@@ -175,6 +180,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Next: enforce database-level no-negative-stock and exactly-once posting, then add automated DB integration/concurrency tests.
 
 ### 2026-09-11 — Inventory Item Serialization
+
 - Hardened purchase stock trigger: posted-only, positive quantity/conversion, per-item transaction advisory lock.
 - Hardened purchase void: invoice lock + per-item locks + negative-result guard before reversal.
 - Applied `20260911173000_inventory_item_serialization.sql` successfully.
@@ -182,6 +188,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - No live business data was created/voided during this checkpoint.
 
 ### 2026-09-11 — Safe Stock Adjustment Boundary
+
 - Added atomic `adjust_stock()` DB operation with session-bound authorization, per-item serialization, negative-stock rejection, and operation-id idempotency.
 - Added `src/app/actions/inventory.ts` Server Action.
 - Verified function existence, authenticated EXECUTE privilege, and RLS on `stock_movements`.
@@ -189,6 +196,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Next: audit all remaining stock-changing paths and implement isolated integration/concurrency tests.
 
 ### 2026-09-11 — Final Phase 2 Ledger Audit
+
 - Audited all repository/database references found for `stock_movements` and purchase triggers.
 - Discovered an old table-level grant that survived RLS policy removal; fixed with `20260911180500_revoke_direct_stock_ledger_writes.sql`.
 - Verified `stock_movements`: authenticated can SELECT but cannot INSERT/UPDATE/DELETE; anon cannot INSERT.
@@ -196,6 +204,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - Phase 2 is ready for isolated integration/concurrency tests before transition to the next phase.
 
 ### 2026-09-11 — Supplier Opening Balance & Payments
+
 - [x] Added `add_supplier_opening_balance()` with supplier lock and operation-id idempotency.
 - [x] Added `pay_supplier()` with supplier lock, outstanding-balance guard, payment-method capture, and operation-id idempotency.
 - [x] Applied `20260911195500_supplier_opening_balance_and_payments.sql` successfully.
@@ -203,6 +212,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [ ] Integration/reconciliation tests.
 
 ### 2026-09-11 — Supplier Statement Read Model
+
 - [x] Added `supplier_statement` view with deterministic running balance ordering (`transaction_date`, `created_at`, `id`).
 - [x] Added supporting statement-order index.
 - [x] Applied `20260911200500_supplier_statement_read_model.sql` successfully.
@@ -210,6 +220,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [ ] Reconciliation and integration/concurrency tests remain before Phase 3 closure.
 
 ### 2026-09-11 — Phase 3 Verification
+
 - [x] Checked supplier ledger references for duplicates: none found.
 - [x] Confirmed supplier balance is derived from ledger transactions.
 - [x] Confirmed supplier statement read model is queryable.
@@ -221,6 +232,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 **NEXT — planned, not started until Phase 3 acceptance is confirmed.**
 
 ### 2026-09-11 — Phase 4 Customer Ledger Foundation
+
 - [x] Evolved existing `debt_transactions` with `reference_table`, `reference_id`, and `payment_method` while preserving existing rows.
 - [x] Added deterministic `customer_statement` read model.
 - [x] Revoked direct client writes to `debt_transactions`; authenticated users retain SELECT under `customers.view`.
@@ -229,6 +241,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [ ] Add idempotency/concurrency safeguards and reconciliation tests.
 
 ### 2026-09-11 — Customer Opening Balance & Payments
+
 - [x] Applied `20260911211500_customer_opening_balance_and_payments.sql` successfully.
 - [x] Added idempotent customer opening balance RPC with customer-level locking.
 - [x] Added customer payment RPC with outstanding-balance guard and customer-level locking.
@@ -236,29 +249,34 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 - [ ] Remove/retire generic customer transaction mutation from UI after migrating all callers.
 
 ### 2026-09-11 — Customer UX Alignment
+
 - [x] Replaced generic Debit/Credit choice in `/debts` with explicit Opening Balance / Payment operations.
 - [x] Removed unused client Supabase instance from transaction form.
 - [x] Existing `/debts` caller now targets controlled Server Actions only.
 
 ### 2026-09-11 — Customer Payment Method & Reconciliation
+
 - [x] Restricted customer payment methods to `cash`, `transfer`, `check`, `other` without introducing cash/bank accounts.
 - [x] Reconciliation check found 0 customer balance mismatches.
 - [x] Applied `20260911212500_customer_payment_methods.sql` successfully.
 - [ ] UI payment-method selector and final integration/concurrency tests.
 
 ### 2026-09-11 — Customer Payment UI
+
 - [x] Added explicit payment-method selector to `/debts`: cash, transfer, check, other.
 - [x] Payment method is disabled for opening-balance operation.
 - [x] UI now sends the selected method through `recordCustomerPayment()`.
 - [ ] Final integration/concurrency/idempotency tests.
 
 ### 2026-09-12 — Customer Ledger RPC Privilege Fix
+
 - [x] Diagnosed `permission denied for table debt_transactions`: protected RPCs were `SECURITY INVOKER` while direct table writes are intentionally revoked.
 - [x] Applied `20260912000500_fix_customer_ledger_rpc_privileges.sql` successfully.
 - [x] Converted controlled customer ledger RPCs to `SECURITY DEFINER`; explicit `customers.manage` authorization remains enforced inside the functions.
 - [x] Verified both RPCs are executable by `authenticated` and run as definer.
 
 ### 2026-09-12 — Phase 4 Acceptance
+
 - [x] User tested customer opening balance successfully after RPC privilege fix.
 - [x] Customer payment flow had already been integrated through controlled Server Action/RPC path.
 - [x] Customer balance reconciliation returned 0 mismatches.
@@ -271,6 +289,7 @@ Focus on reports that are useful for this shop rather than ERP/accounting featur
 Scope: operational reports and UX polish for this single-shop system; no full accounting expansion.
 
 Planned first pass:
+
 - Inventory valuation / stock snapshot using latest purchase cost.
 - Low-stock / out-of-stock report.
 - Purchase summary and supplier balances.
@@ -281,6 +300,7 @@ Planned first pass:
 - Audit and permission review for report access.
 
 ### 2026-09-12 — Legacy Code & File Cleanup Audit
+
 - [x] Migrated ItemUnitsDialog.tsx from legacy integrations/supabase/client to lib/supabase/client.
 - [x] Migrated UserProfileDialog.tsx to lib/supabase/client and lib/next/permissions.
 - [x] Removed unused legacy src/integrations/supabase/client.ts.
@@ -297,6 +317,7 @@ Planned first pass:
 - [ ] Run local lint/build/test suite in the development environment before declaring cleanup complete.
 
 ### 2026-09-12 — Vite to Next.js Environment Cleanup
+
 - [x] Added root eslint.config.mjs using ESLint 9 flat config + TypeScript ESLint + React Hooks + Prettier compatibility.
 - [x] Replaced remaining Vite-era import.meta.env usage in src/lib/config.server.ts with Next.js process.env and NEXT_PUBLIC_* conventions.
 - [x] Removed legacy service-role fallback from application config; only SUPABASE_SERVICE_ROLE_KEY is supported.
@@ -304,8 +325,8 @@ Planned first pass:
 - [x] Repository search found no active Vite runtime APIs (import.meta.glob, @vitejs, vite/client, ReactDOM createRoot) and no Vite config/entry files.
 - [ ] Run npm install, npm run lint, npm run build, and npm test locally to validate the migrated project.
 
-
 ### 2026-09-12 — Supplier Ledger UI
+
 - [x] Added supplier balance column to `/suppliers` using the derived `supplier_balances` read model.
 - [x] Added supplier statement route `/suppliers/[id]` backed by `supplier_statement`.
 - [x] Added controlled supplier opening-balance and payment dialogs using Server Actions/RPCs with operation UUIDs.
@@ -313,7 +334,9 @@ Planned first pass:
 - [x] Added Arabic/English supplier-ledger translations.
 - [x] Updated route and technical/context documentation.
 - [ ] Final browser integration/concurrency acceptance tests remain before formal Phase 3 closure.
+
 ### 2026-09-15 — Customer Statement Read-Model Fix
+
 - [x] Replaced the legacy self-JOIN running-balance calculation in `customer_statement` with a deterministic window function over `transaction_date`, `created_at`, and `id`.
 - [x] Preserved the existing statement column/API shape used by the application and exports.
 - [x] Added migration `supabase/migrations/20260915000000_fix_customer_statement_read_model.sql`.
@@ -324,7 +347,20 @@ Planned first pass:
 - [x] This closes the database-side Statement Duplication / Inflated Balance defect for both customer and supplier statement read models.
 - [ ] Re-run application/browser statement and export acceptance tests with representative opening-balance + payment + purchase/debit data.
 
+### 2026-09-15 — UX, Accessibility & Security Hardening
+
+- [x] Implemented centralized error translation handling `translateError()` in `src/lib/i18n.tsx` and applied it to 14 pages/components to translate DB/server errors to Arabic.
+- [x] Translated `ConfirmAction` strings statically.
+- [x] Added visual `Skeleton` loading state with `isLoading` property to `DataTable.tsx` and refactored all data grids to use it.
+- [x] Implemented Customer Ledger UI (`customers/[id]/page.tsx`) mapped to Server Actions, supporting exports and payment/opening balance entry.
+- [x] Improved Supplier Ledger UX by adding conditional color coding to financial values and RTL direction fixes for icons.
+- [x] Injected `aria-label` and `title` tooltips into all icon-only `Button` elements across the app to satisfy WCAG accessibility standards.
+- [x] Fixed a Privilege Escalation vulnerability in `src/app/actions/users.ts`: replaced arbitrary client-provided `actorId` with strict session verification (`auth.getUser()`) and server-side RPC authorization check (`has_permission('users.manage')`).
+- [x] Resolved resulting TypeScript compilation and destructuring errors to pass a clean `next build`.
+
+
 ## Current checkpoint — 2026-09-15
+
 - Phase 2: **CLOSED**.
 - Phase 3 Supplier Ledger: **FUNCTIONALLY IMPLEMENTED; final acceptance/verification remains**.
 - Phase 4 Customer Ledger: **CLOSED**, with the customer statement read-model corrected afterward as a hardening fix.
@@ -332,7 +368,7 @@ Planned first pass:
 - Phase 5 Reports & UX: **NEXT**. Do not expand into full accounting; first finish the remaining acceptance gates and then begin reports/UX from a verified baseline.
 
 ### Next execution order
+
 1. Run representative customer/supplier statement + export acceptance tests.
-2. Run local `npm run lint`, `npm run build`, and `npm test` and record the results.
-3. Resolve any remaining correctness/security issues found by those checks.
-4. Start Phase 5 with reports/UX, beginning with inventory valuation, low/out-of-stock, purchase/supplier, customer statements/balances, and stock-movement reporting.
+2. Resolve any remaining correctness/security issues found by those checks.
+3. Start Phase 5 with reports/UX, beginning with inventory valuation, low/out-of-stock, purchase/supplier, customer statements/balances, and stock-movement reporting.

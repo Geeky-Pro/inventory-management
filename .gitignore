@@ -49,3 +49,4 @@ skills-lock.json
 .env
 .env.*
 !.env.example
+lint_report.json
