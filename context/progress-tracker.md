@@ -359,16 +359,26 @@ Planned first pass:
 - [x] Resolved resulting TypeScript compilation and destructuring errors to pass a clean `next build`.
 
 
+### 2026-09-15 — Phase 5 UX and Ledger Refinements
+
+- [x] Renamed the generic `/debts` route in the UI to **Customer Statements** (كشوف حسابات العملاء).
+- [x] Created a centralized **Supplier Statements** page (`/supplier-statements`) mirroring the customer ledger experience.
+- [x] Re-routed the action buttons in the main Suppliers view to direct users to the centralized Supplier Statements page with pre-selected parameters (`?supplierId=...`).
+- [x] Handled Next.js `useSearchParams` constraints by properly wrapping the query-param reading component in a React `Suspense` boundary.
+- [x] **Audit Log Expansion**: Configured the `audit_log_row_change` trigger on `supplier_transactions` to track all supplier ledger mutations.
+- [x] **Global RLS Security Fix**: Resolved widespread "permission denied" errors across RLS policies by generating and applying `20260915004249_fix_rls_has_permission.sql`, converting all outdated `has_permission` dependencies in policies to the session-bound `current_user_has_permission`.
+
 ## Current checkpoint — 2026-09-15
 
 - Phase 2: **CLOSED**.
-- Phase 3 Supplier Ledger: **FUNCTIONALLY IMPLEMENTED; final acceptance/verification remains**.
-- Phase 4 Customer Ledger: **CLOSED**, with the customer statement read-model corrected afterward as a hardening fix.
+- Phase 3 Supplier Ledger: **CLOSED**, functionally complete with central statement UI and audit logs configured.
+- Phase 4 Customer Ledger: **CLOSED**, with central statement UI configured.
 - Legacy/Vite cleanup: **IMPLEMENTED; local lint/build/test validation remains**.
-- Phase 5 Reports & UX: **NEXT**. Do not expand into full accounting; first finish the remaining acceptance gates and then begin reports/UX from a verified baseline.
+- Phase 5 Reports & UX: **IN PROGRESS**, beginning with statement UX improvements. Do not expand into full accounting.
 
 ### Next execution order
 
 1. Run representative customer/supplier statement + export acceptance tests.
-2. Resolve any remaining correctness/security issues found by those checks.
-3. Start Phase 5 with reports/UX, beginning with inventory valuation, low/out-of-stock, purchase/supplier, customer statements/balances, and stock-movement reporting.
+2. Resolve any remaining React Hook dependency warnings from earlier lint scans.
+3. Continue Phase 5 UX improvements (Quick Actions, Central Dashboard).
+4. Build Phase 5 Operational Reports (inventory valuation, low/out-of-stock, stock-movement).
