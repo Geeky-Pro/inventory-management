@@ -22,7 +22,8 @@
 - `/settings` — `src/app/(authenticated)/settings/page.tsx`
 - `/suppliers` — `src/app/(authenticated)/suppliers/page.tsx`
 - `/units` — `src/app/(authenticated)/units/page.tsx`
-- `/debts` — `src/app/(authenticated)/debts/page.tsx`
+- `/debts` — `src/app/(authenticated)/debts/page.tsx` (كشوف حسابات العملاء)
+- `/supplier-statements` — `src/app/(authenticated)/supplier-statements/page.tsx` (كشوف حسابات الموردين)
 - `/users` — `src/app/(authenticated)/users/page.tsx`
 - `/permission-groups` — `src/app/(authenticated)/permission-groups/page.tsx`
 - `/audit-logs` — `src/app/(authenticated)/audit-logs/page.tsx`

@@ -70,12 +70,12 @@ export default function SuppliersPage() {
             cell: (r: SupplierRow) => (
               <div className="flex gap-1">
                 <Button asChild variant="ghost" size="icon" title={t("supplier_statement")}>
-                  <Link href={`/suppliers/${r.id}`}><FileText className="h-4 w-4" /></Link>
+                  <Link href={`/supplier-statements?supplierId=${r.id}`}><FileText className="h-4 w-4" /></Link>
                 </Button>
                 {can("suppliers.manage") && (
                   <>
                     <Button asChild variant="ghost" size="icon" title={t("supplier_payment")}>
-                      <Link href={`/suppliers/${r.id}?action=payment`}><Wallet className="h-4 w-4" /></Link>
+                      <Link href={`/supplier-statements?supplierId=${r.id}&action=payment`}><Wallet className="h-4 w-4" /></Link>
                     </Button>
                     <SForm row={r} onDone={refetch} />
                     <ConfirmDelete onConfirm={async () => {

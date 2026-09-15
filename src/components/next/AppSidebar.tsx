@@ -62,6 +62,7 @@ function useNavItems() {
     { to: "/invoices",         icon: FileText,        label: t("invoices"),          perm: "invoices.view",       altPerm: null },
     { to: "/movements",        icon: Activity,        label: t("movements"),         perm: "items.view",          altPerm: null },
     { to: "/debts",            icon: Wallet,          label: t("debts"),             perm: "debts.view",          altPerm: null },
+    { to: "/supplier-statements", icon: Wallet,       label: t("supplier_statements"), perm: "suppliers.view",    altPerm: null },
     { to: "/reports",          icon: BarChart3,       label: t("reports"),           perm: "reports.view",        altPerm: null },
     { to: "/audit-logs",       icon: ClipboardList,   label: t("audit_logs"),        perm: "system.admin",        altPerm: null },
     { to: "/users",            icon: Shield,          label: t("users"),             perm: "users.manage",        altPerm: "permissions.manage" },
