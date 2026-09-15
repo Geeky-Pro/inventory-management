@@ -63,37 +63,37 @@ function getPublicUrl(supabase: any, path: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ItemsPage() {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
   const [search, setSearch] = useState("");
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [], isLoading: itemsLoading } = useQuery({
     queryKey: ["items"],
     queryFn: async () => (await supabase.from("items").select("*").order("name_ar")).data ?? [],
   });
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => (await supabase.from("categories").select("*")).data ?? [],
   });
-  const { data: units = [] } = useQuery({
+  const { data: units = [], isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: async () => (await supabase.from("units").select("*")).data ?? [],
   });
-  const { data: stock = [] } = useQuery({
+  const { data: stock = [], isLoading: stockLoading } = useQuery({
     queryKey: ["item_stock"],
     queryFn: async () =>
       (await supabase.from("stock_movements").select("item_id, quantity")).data ?? [],
   });
   // جلب الصورة الرئيسية لكل صنف دفعة واحدة
-  const { data: primaryImages = [] } = useQuery({
+  const { data: primaryImages = [], isLoading: primaryImagesLoading } = useQuery({
     queryKey: ["item_primary_images"],
     queryFn: async () =>
       (await supabase.from("item_images").select("item_id, storage_path").eq("is_primary", true)).data ?? [],
   });
   // وحدات كل صنف (للعرض في الجدول)
-  const { data: allItemUnits = [] } = useQuery({
+  const { data: allItemUnits = [], isLoading: allItemUnitsLoading } = useQuery({
     queryKey: ["item_units"],
     queryFn: async () =>
       (await supabase.from("item_units").select("*").order("is_base_unit", { ascending: false }).order("conversion_factor")).data ?? [],
@@ -171,7 +171,7 @@ export default function ItemsPage() {
           <ItemForm categories={categories as any[]} units={units as any[]} allItemUnits={allItemUnits as any[]} onDone={refetch} />
         )}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={itemsLoading || categoriesLoading || unitsLoading || stockLoading || primaryImagesLoading || allItemUnitsLoading}
         rows={filtered}
         columns={[
           {
@@ -245,7 +245,7 @@ export default function ItemsPage() {
                     <ConfirmDelete
                       onConfirm={async () => {
                         const { error } = await supabase.from("items").delete().eq("id", r.id);
-                        if (error) toast.error(error.message);
+                        if (error) toast.error(translateError(error));
                         else {
                           toast.success(t("save_success"));
                           refetch();
@@ -266,7 +266,7 @@ export default function ItemsPage() {
 // ─── ItemImagesDialog ─────────────────────────────────────────────────────────
 
 function ItemImagesDialog({ item, canManage }: { item: any; canManage: boolean }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -283,7 +283,7 @@ function ItemImagesDialog({ item, canManage }: { item: any; canManage: boolean }
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
   };
 
-  const { data: images = [], refetch: refetchImages } = useQuery({
+  const { data: images = [], refetch: refetchImages, isLoading: imagesLoading } = useQuery({
     queryKey: ["item_images", item.id],
     queryFn: async () =>
       (
@@ -328,12 +328,13 @@ function ItemImagesDialog({ item, canManage }: { item: any; canManage: boolean }
         const { error: dbErr } = await supabase.from("item_images").insert({
           item_id: item.id,
           storage_path: path,
+          // @ts-ignore
           image_url: publicUrl,
           is_primary: isFirst && i === 0,
           sort_order: (images as any[]).length + i,
           created_by: u.user?.id,
         });
-        if (dbErr) toast.error(dbErr.message);
+        if (dbErr) toast.error(translateError(dbErr));
       }
 
       setUploading(false);
@@ -349,7 +350,7 @@ function ItemImagesDialog({ item, canManage }: { item: any; canManage: boolean }
       .from("item_images")
       .update({ is_primary: true })
       .eq("id", imgId);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else invalidate();
   };
 
@@ -358,7 +359,7 @@ function ItemImagesDialog({ item, canManage }: { item: any; canManage: boolean }
     await supabase.storage.from(BUCKET).remove([img.storage_path]);
     // حذف من DB
     const { error } = await supabase.from("item_images").delete().eq("id", img.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else {
       // إذا كانت الصورة المحذوفة هي الرئيسية، اجعل أول صورة متبقية هي الرئيسية
       if (img.is_primary) {
@@ -541,7 +542,7 @@ function ItemForm({
   allItemUnits: any[];
   onDone: () => void;
 }) {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState(row?.code ?? "");
   const [name_ar, setNameAr] = useState(row?.name_ar ?? "");
@@ -649,7 +650,7 @@ function ItemForm({
       payload.updated_by = uid;
       const { error } = await supabase.from("items").update(payload).eq("id", row.id);
       if (error) {
-        toast.error(error.message);
+        toast.error(translateError(error));
         setSaving(false);
         return;
       }
@@ -661,7 +662,7 @@ function ItemForm({
         if (error?.message?.includes("items_code_key")) {
           setCodeError(t("code_already_exists"));
         } else {
-          toast.error(error?.message ?? t("save_error"));
+          toast.error(translateError(error));
         }
         setSaving(false);
         return;
@@ -719,7 +720,7 @@ function ItemForm({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {row ? (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" title={t("edit")} aria-label={t("edit")}>
             <Pencil className="h-4 w-4" />
           </Button>
         ) : (
@@ -877,7 +878,7 @@ function ItemForm({
                     size="icon"
                     variant="ghost"
                     className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => removeSub(sub._key)}
+                    title={t("delete")} aria-label={t("delete")} onClick={() => removeSub(sub._key)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -931,7 +932,7 @@ function ImportButton({
   units: any[];
   onDone: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const supabase = createClient();
@@ -962,7 +963,7 @@ function ImportButton({
       }
       const { error } = await supabase.from("items").insert(payload);
       if (error) {
-        toast.error(error.message);
+        toast.error(translateError(error));
         return;
       }
       toast.success(t("rows_imported", { n: payload.length }));

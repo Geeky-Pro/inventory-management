@@ -26,7 +26,7 @@ import { useCallback, useRef, useState } from "react";
 
 export default function ProfilePage() {
   type Tab = "profile" | "password" | "permissions";
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [tab, setTab] = useState<Tab>("profile");
   const { data: user } = useCurrentUser();
   const { perms } = usePermissions();
@@ -101,7 +101,7 @@ export default function ProfilePage() {
 
 // ─── Tab: Profile ─────────────────────────────────────────────────────────────
 function ProfileTab({ uid, profile, onDone }: { uid: string; profile: any; onDone: () => void }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -136,7 +136,7 @@ function ProfileTab({ uid, profile, onDone }: { uid: string; profile: any; onDon
       onDone();
       toast.success(t("avatar_updated"));
     } catch (e: any) {
-      toast.error(e.message ?? t("save_error"));
+      toast.error(translateError(e));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -151,7 +151,7 @@ function ProfileTab({ uid, profile, onDone }: { uid: string; profile: any; onDon
       onDone();
       toast.success(t("avatar_removed"));
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(translateError(e));
     } finally { setUploading(false); }
   };
 
@@ -159,7 +159,7 @@ function ProfileTab({ uid, profile, onDone }: { uid: string; profile: any; onDon
     setSaving(true);
     const { error } = await supabase.from("profiles").update({ full_name: fullName || null }).eq("id", uid);
     setSaving(false);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else { toast.success(t("save_success")); onDone(); }
   };
 
@@ -237,7 +237,7 @@ function ProfileTab({ uid, profile, onDone }: { uid: string; profile: any; onDon
 
 // ─── Tab: Password ────────────────────────────────────────────────────────────
 function PasswordTab() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const supabase = createClient();
   const [next, setNext]       = useState("");
   const [confirm, setConfirm] = useState("");
@@ -254,7 +254,7 @@ function PasswordTab() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password: next });
     setLoading(false);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else { setDone(true); setNext(""); setConfirm(""); toast.success(t("password_changed")); }
   };
 
@@ -359,7 +359,7 @@ const PERM_LABELS: Record<string, { ar: string; en: string }> = {
 };
 
 function PermissionsTab({ perms }: { perms: string[] }) {
-  const { locale } = useI18n();
+  const { locale , translateError} = useI18n();
   const isAdmin = perms.includes("system.admin");
 
   const grouped = perms.reduce<Record<string, string[]>>((acc, key) => {

@@ -109,7 +109,7 @@ export function UserProfileDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const qc = useQueryClient();
   const { data: user } = useCurrentUser();
   const { perms } = usePermissions();
@@ -185,7 +185,7 @@ function ProfileTab({
   avatarUrl: string | null;
   onDone: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
@@ -236,7 +236,7 @@ function ProfileTab({
       onDone();
       toast.success(t("avatar_updated"));
     } catch (e: any) {
-      toast.error(e.message ?? t("save_error"));
+      toast.error(translateError(e));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -252,7 +252,7 @@ function ProfileTab({
       onDone();
       toast.success(t("avatar_removed"));
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(translateError(e));
     } finally {
       setUploading(false);
     }
@@ -266,7 +266,7 @@ function ProfileTab({
       .update({ full_name: fullName || null })
       .eq("id", uid);
     setSaving(false);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else { toast.success(t("save_success")); onDone(); }
   };
 
@@ -348,7 +348,7 @@ function ProfileTab({
 
 // ─── Tab: Password ────────────────────────────────────────────────────────────
 function PasswordTab() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -366,7 +366,7 @@ function PasswordTab() {
     const { error } = await supabase.auth.updateUser({ password: next });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(translateError(error));
     } else {
       setDone(true);
       setCurrent(""); setNext(""); setConfirm("");
@@ -487,7 +487,7 @@ const PERM_LABELS: Record<string, { ar: string; en: string }> = {
 };
 
 function PermissionsTab({ perms }: { perms: string[] }) {
-  const { locale } = useI18n();
+  const { locale , translateError} = useI18n();
   const isAdmin = perms.includes("system.admin");
 
   // تجميع الصلاحيات حسب التصنيف

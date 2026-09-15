@@ -55,7 +55,7 @@ export default function AuditLogsPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  const { data: logs = [] } = useQuery<AuditLogRow[]>({
+  const { data: logs = [], isLoading: logsLoading } = useQuery<AuditLogRow[]>({
     queryKey: ["audit_logs"],
     enabled: !authLoading,
     queryFn: async () => {
@@ -72,7 +72,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  const { data: profiles = [] } = useQuery<ProfileLookup[]>({
+  const { data: profiles = [], isLoading: profilesLoading } = useQuery<ProfileLookup[]>({
     queryKey: ["audit_profiles"],
     enabled: !authLoading,
     queryFn: async () => {
@@ -85,7 +85,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  const { data: permissions = [] } = useQuery<PermissionLabel[]>({
+  const { data: permissions = [], isLoading: permissionsLoading } = useQuery<PermissionLabel[]>({
     queryKey: ["audit_permissions"],
     enabled: !authLoading,
     queryFn: async () => {
@@ -100,7 +100,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  const { data: permissionGroups = [] } = useQuery<PermissionGroupLabel[]>({
+  const { data: permissionGroups = [], isLoading: permissionGroupsLoading } = useQuery<PermissionGroupLabel[]>({
     queryKey: ["audit_permission_groups"],
     enabled: !authLoading,
     queryFn: async () => {
@@ -297,7 +297,7 @@ export default function AuditLogsPage() {
           </div>
         </div>
       </div>
-      <DataTable
+      <DataTable isLoading={logsLoading || profilesLoading || permissionsLoading || permissionGroupsLoading}
         rows={filteredRows}
         columns={[
           {

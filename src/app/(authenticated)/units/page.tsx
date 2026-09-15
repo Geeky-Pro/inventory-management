@@ -23,11 +23,11 @@ import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 
 export default function UnitsPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: rowsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: async () => (await supabase.from("units").select("*").order("name_ar")).data ?? [],
   });
@@ -38,7 +38,7 @@ export default function UnitsPage() {
       <PageHeader title={t("units")}>
         {can("settings.manage") && <UnitForm onDone={refetch} />}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={rowsLoading}
         rows={rows}
         columns={[
           { key: "ar", header: t("name_ar"), cell: (r: any) => r.name_ar },
@@ -54,7 +54,7 @@ export default function UnitsPage() {
                   <ConfirmDelete
                     onConfirm={async () => {
                       const { error } = await supabase.from("units").delete().eq("id", r.id);
-                      if (error) toast.error(error.message);
+                      if (error) toast.error(translateError(error));
                       else {
                         toast.success(t("save_success"));
                         refetch();
@@ -71,7 +71,7 @@ export default function UnitsPage() {
 }
 
 function UnitForm({ row, onDone }: { row?: any; onDone: () => void }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [name_ar, setAr] = useState(row?.name_ar ?? "");
   const [name_en, setEn] = useState(row?.name_en ?? "");
@@ -81,7 +81,7 @@ function UnitForm({ row, onDone }: { row?: any; onDone: () => void }) {
     const { error } = row
       ? await supabase.from("units").update(payload).eq("id", row.id)
       : await supabase.from("units").insert(payload);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success(t("save_success"));
     setOpen(false);
     onDone();
@@ -90,7 +90,7 @@ function UnitForm({ row, onDone }: { row?: any; onDone: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {row ? (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" title={t("edit")} aria-label={t("edit")}>
             <Pencil className="h-4 w-4" />
           </Button>
         ) : (

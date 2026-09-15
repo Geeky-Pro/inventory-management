@@ -226,6 +226,10 @@ const dict = {
     cannot_delete_base_unit: "لا يمكن حذف الوحدة الأساسية",
     item_units: "وحدات الصنف",
     images_uploaded: "تم رفع الصور بنجاح",
+    error_unique: "هذا السجل موجود مسبقاً ولا يمكن تكراره.",
+    error_foreign_key: "لا يمكن حذف أو تعديل هذا السجل لارتباطه ببيانات أخرى.",
+    error_permission: "ليس لديك صلاحية لإجراء هذه العملية.",
+    error_generic: "حدث خطأ أثناء معالجة طلبك، يرجى المحاولة مرة أخرى.",
   },
   en: {
     app_name: "Inventory System",
@@ -448,6 +452,10 @@ const dict = {
     cannot_delete_base_unit: "Cannot delete base unit",
     item_units: "Item Units",
     images_uploaded: "Images uploaded successfully",
+    error_unique: "This record already exists and cannot be duplicated.",
+    error_foreign_key: "Cannot delete or modify this record because it is linked to other data.",
+    error_permission: "You do not have permission to perform this action.",
+    error_generic: "An error occurred while processing your request, please try again.",
   },
 } as const;
 
@@ -459,6 +467,7 @@ interface I18nCtx {
   dir: "rtl" | "ltr";
   setLocale: (l: Locale) => void;
   t: (k: Key, vars?: Record<string, string | number>) => string;
+  translateError: (err: any) => string;
 }
 
 const Ctx = createContext<I18nCtx | null>(null);
@@ -489,8 +498,17 @@ export function I18nProvider({ children, defaultLocale }: { children: ReactNode,
     return s;
   };
 
+  const translateError: I18nCtx["translateError"] = (err) => {
+    const msg = err?.message || err?.toString() || "";
+    if (msg.includes("duplicate key value violates unique constraint")) return t("error_unique");
+    if (msg.includes("violates foreign key constraint")) return t("error_foreign_key");
+    if (msg.includes("permission denied") || msg.includes("new row violates row-level security policy")) return t("error_permission");
+    if (msg.includes("Failed to fetch") || msg.includes("network")) return t("error_generic");
+    return msg || t("error_generic");
+  };
+
   return (
-    <Ctx.Provider value={{ locale, dir: locale === "ar" ? "rtl" : "ltr", setLocale, t }}>
+    <Ctx.Provider value={{ locale, dir: locale === "ar" ? "rtl" : "ltr", setLocale, t, translateError }}>
       {children}
     </Ctx.Provider>
   );

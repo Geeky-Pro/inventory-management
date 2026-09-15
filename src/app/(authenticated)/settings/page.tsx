@@ -33,7 +33,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   if (!can("settings.view")) return <PageHeader title={t("no_permission")} />;
   return (
@@ -56,11 +56,11 @@ export default function SettingsPage() {
 }
 
 function CurrenciesTab() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: rowsLoading } = useQuery({
     queryKey: ["currencies"],
     queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
   });
@@ -75,7 +75,7 @@ function CurrenciesTab() {
           onCancelEdit={() => setEditingCurrency(null)}
         />
       )}
-      <DataTable
+      <DataTable isLoading={rowsLoading}
         rows={rows as any[]}
         columns={[
           { key: "c", header: t("code"), cell: (r: any) => r.code },
@@ -90,7 +90,7 @@ function CurrenciesTab() {
               can("settings.manage") &&
               !r.is_base && (
                 <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => setEditingCurrency(r)}>
+                  <Button size="icon" variant="ghost" title={t("edit")} aria-label={t("edit")} onClick={() => setEditingCurrency(r)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <ConfirmDelete
@@ -99,7 +99,7 @@ function CurrenciesTab() {
                         .from("currencies")
                         .delete()
                         .eq("code", r.code);
-                      if (error) toast.error(error.message);
+                      if (error) toast.error(translateError(error));
                       else {
                         toast.success(t("save_success"));
                         refetch();
@@ -124,7 +124,7 @@ function CurrencyForm({
   editing?: any | null;
   onCancelEdit?: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
   const [ar, setAr] = useState("");
@@ -150,7 +150,7 @@ function CurrencyForm({
         .from("currencies")
         .update({ code: code.toUpperCase(), name_ar: ar, name_en: en, symbol: sym })
         .eq("code", editing.code);
-      if (error) return toast.error(error.message);
+      if (error) return toast.error(translateError(error));
       toast.success(t("save_success"));
       setOpen(false);
       onDone();
@@ -160,7 +160,7 @@ function CurrencyForm({
     const { error } = await supabase
       .from("currencies")
       .insert({ code: code.toUpperCase(), name_ar: ar, name_en: en, symbol: sym, is_base: false });
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success(t("save_success"));
     setOpen(false);
     onDone();
@@ -229,17 +229,17 @@ function CurrencyForm({
 }
 
 function RatesTab() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: rowsLoading } = useQuery({
     queryKey: ["rates"],
     queryFn: async () =>
       (await supabase.from("exchange_rates").select("*").order("rate_date", { ascending: false }))
         .data ?? [],
   });
-  const { data: currencies = [] } = useQuery({
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
     queryKey: ["currencies"],
     queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
   });
@@ -255,7 +255,7 @@ function RatesTab() {
           onCancelEdit={() => setEditing(null)}
         />
       )}
-      <DataTable
+      <DataTable isLoading={rowsLoading}
         rows={rows as any[]}
         columns={[
           { key: "d", header: t("rate_date"), cell: (r: any) => fmtDate(r.rate_date) },
@@ -267,7 +267,7 @@ function RatesTab() {
             cell: (r: any) =>
               can("settings.manage") && (
                 <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => setEditing(r)}>
+                  <Button size="icon" variant="ghost" title={t("edit")} aria-label={t("edit")} onClick={() => setEditing(r)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <ConfirmDelete
@@ -276,7 +276,7 @@ function RatesTab() {
                         .from("exchange_rates")
                         .delete()
                         .eq("id", r.id);
-                      if (error) toast.error(error.message);
+                      if (error) toast.error(translateError(error));
                       else {
                         toast.success(t("save_success"));
                         refetch();
@@ -303,7 +303,7 @@ function RateForm({
   editing?: any | null;
   onCancelEdit?: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [currency_code, setCur] = useState("");
   const [rate_to_base, setRate] = useState<number>(0);
@@ -328,7 +328,7 @@ function RateForm({
         .from("exchange_rates")
         .update({ currency_code, rate_to_base, rate_date })
         .eq("id", editing.id);
-      if (error) return toast.error(error.message);
+      if (error) return toast.error(translateError(error));
       toast.success(t("save_success"));
       setOpen(false);
       onDone();
@@ -338,7 +338,7 @@ function RateForm({
     const { error } = await supabase
       .from("exchange_rates")
       .insert({ currency_code, rate_to_base, rate_date, created_by: u.user?.id });
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success(t("save_success"));
     setOpen(false);
     onDone();

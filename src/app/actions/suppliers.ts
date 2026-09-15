@@ -16,7 +16,7 @@ export async function createSupplier(input: SupplierInput) {
   if (!user.user) return { ok: false, error: "Authentication required" };
   if (!input.name.trim()) return { ok: false, error: "Supplier name is required" };
   const { data, error } = await supabase.from("suppliers").insert({
-    name: input.name.trim(), phone: input.phone ?? null, notes: input.notes ?? null,
+    name: input.name.trim(), phone: input.phone ?? null, notes: input.notes ?? undefined,
     default_currency: input.defaultCurrency ?? null, default_payment_type: input.defaultPaymentType ?? "cash",
     created_by: user.user.id,
   }).select("*").single();
@@ -30,7 +30,7 @@ export async function updateSupplier(id: string, input: SupplierInput) {
   if (!user.user) return { ok: false, error: "Authentication required" };
   if (!id || !input.name.trim()) return { ok: false, error: "Supplier name is required" };
   const { error } = await supabase.from("suppliers").update({
-    name: input.name.trim(), phone: input.phone ?? null, notes: input.notes ?? null,
+    name: input.name.trim(), phone: input.phone ?? null, notes: input.notes ?? undefined,
     default_currency: input.defaultCurrency ?? null, default_payment_type: input.defaultPaymentType ?? "cash",
     updated_by: user.user.id,
   }).eq("id", id);
@@ -62,7 +62,7 @@ export async function addSupplierOpeningBalance(input: {
   const { data, error } = await supabase.rpc("add_supplier_opening_balance", {
     _operation_id: input.operationId, _supplier_id: input.supplierId, _amount_local: input.amountLocal,
     _currency_code: input.currencyCode, _exchange_rate: input.exchangeRate,
-    _transaction_date: input.transactionDate, _notes: input.notes ?? null,
+    _transaction_date: input.transactionDate, _notes: input.notes ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true, id: data };
@@ -87,7 +87,7 @@ export async function recordSupplierPayment(input: {
   const { data, error } = await supabase.rpc("pay_supplier", {
     _operation_id: input.operationId, _supplier_id: input.supplierId, _amount_local: input.amountLocal,
     _currency_code: input.currencyCode, _exchange_rate: input.exchangeRate,
-    _transaction_date: input.transactionDate, _payment_method: input.paymentMethod, _notes: input.notes ?? null,
+    _transaction_date: input.transactionDate, _payment_method: input.paymentMethod, _notes: input.notes ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true, id: data };

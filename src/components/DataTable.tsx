@@ -9,6 +9,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface Column<T> {
   key: string;
@@ -21,15 +22,28 @@ export function DataTable<T>({
   rows,
   columns,
   empty,
+  isLoading,
 }: {
   rows: T[];
   columns: Column<T>[];
   empty?: ReactNode;
+  isLoading?: boolean;
 }) {
   const { t } = useI18n();
   const renderMobile = () => (
     <div className="space-y-3 md:hidden">
-      {rows.length === 0 ? (
+      {isLoading ? (
+        Array.from({ length: 3 }).map((_, idx) => (
+          <div key={idx} className="rounded-md border bg-card p-3 shadow-sm space-y-2">
+            {columns.map((c, cIdx) => (
+              <div key={cIdx} className="flex justify-between items-center py-1">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-4 w-1/4" />
+              </div>
+            ))}
+          </div>
+        ))
+      ) : rows.length === 0 ? (
         <div className="rounded-md border bg-card px-4 py-6 text-center text-sm text-muted-foreground">
           {empty ?? t("no_data")}
         </div>
@@ -70,7 +84,17 @@ export function DataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {columns.map((c) => (
+                    <TableCell key={c.key} className={c.className}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}

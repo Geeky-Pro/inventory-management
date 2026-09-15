@@ -36,38 +36,38 @@ import { createSupplier } from "@/app/actions/suppliers";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function InvoicesPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
   const supabase = createClient();
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ["purchase_invoices"],
     queryFn: async () =>
       (await supabase.from("purchase_invoices").select("*").order("invoice_date", { ascending: false })).data ?? [],
   });
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliers = [], isLoading: suppliersLoading } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => (await supabase.from("suppliers").select("*")).data ?? [],
   });
-  const { data: items = [] } = useQuery({
+  const { data: items = [], isLoading: itemsLoading } = useQuery({
     queryKey: ["items"],
     queryFn: async () => (await supabase.from("items").select("*").order("name_ar")).data ?? [],
   });
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => (await supabase.from("categories").select("*")).data ?? [],
   });
-  const { data: currencies = [] } = useQuery({
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
     queryKey: ["currencies"],
     queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
   });
-  const { data: units = [] } = useQuery({
+  const { data: units = [], isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: async () => (await supabase.from("units").select("*")).data ?? [],
   });
-  const { data: rawItemUnits = [] } = useQuery({
+  const { data: rawItemUnits = [], isLoading: rawItemUnitsLoading } = useQuery({
     queryKey: ["item_units"],
     queryFn: async () =>
       (await supabase.from("item_units").select("*")
@@ -109,7 +109,7 @@ export default function InvoicesPage() {
           />
         )}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={invoicesLoading || suppliersLoading || itemsLoading || categoriesLoading || currenciesLoading || unitsLoading || rawItemUnitsLoading}
         rows={invoices}
         columns={[
           { key: "no",  header: t("invoice_no"),   cell: (r: any) => r.invoice_no },
@@ -147,7 +147,7 @@ export default function InvoicesPage() {
                     }
                     onConfirm={async () => {
                       const result = await voidPurchase({ invoiceId: r.id });
-                      if (!result.ok) toast.error(result.error);
+                      if (!result.ok) toast.error(translateError(result.error));
                       else { toast.success(t("void_success")); refetch(); }
                     }}
                   />
@@ -196,7 +196,7 @@ function SupplierForm({
   onCreated: (s: any) => void;
   currencies: any[];
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -213,7 +213,7 @@ function SupplierForm({
       defaultPaymentType: default_payment_type,
     });
 
-    if (!result.ok) { toast.error(result.error); return; }
+    if (!result.ok) { toast.error(translateError(result.error)); return; }
     toast.success(t("save_success"));
     onOpenChange(false);
     onCreated(result.supplier);
@@ -284,7 +284,7 @@ function ItemFormDialog({
   units: any[];
   onCreated: (newItemId: string, defUnitId: string | null, defConvFactor: number) => void;
 }) {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const qc = useQueryClient();
   const [code, setCode] = useState("");
   const [name_ar, setNameAr] = useState("");
@@ -331,7 +331,7 @@ function ItemFormDialog({
     
     if (error || !created) {
       if (error?.message?.includes("items_code_key")) setCodeError(t("code_already_exists"));
-      else toast.error(error?.message ?? t("save_error"));
+      else toast.error(translateError(error));
       setSaving(false); return;
     }
 
@@ -428,7 +428,7 @@ function ItemFormDialog({
                       {sub.is_purchase_default && <Check className="h-3 w-3 text-white" />}
                     </button>
                   </div>
-                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeSub(sub._key)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-destructive" title={t("delete")} aria-label={t("delete")} onClick={() => removeSub(sub._key)}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>
               );
             })}
@@ -454,7 +454,7 @@ function InvoiceForm({
   suppliers: any[]; items: any[]; currencies: any[]; units: any[]; categories: any[]; allItemUnits: any[];
   onDone: () => void; editing?: any | null; onCancelEdit?: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen]             = useState(false);
   const [saving, setSaving]         = useState(false);
   const [showAddSupplier, setShowAddSupplier] = useState(false);
@@ -494,7 +494,7 @@ function InvoiceForm({
       setNotes(editing.notes ?? "");
 
       const { data: existingLines, error } = await supabase.from("purchase_invoice_items").select("*").eq("invoice_id", editing.id).order("created_at", { ascending: true });
-      if (error) { toast.error(error.message); setLines([emptyLine()]); return; }
+      if (error) { toast.error(translateError(error)); setLines([emptyLine()]); return; }
 
       setLines(existingLines?.length ? existingLines.map((l: any) => ({
         item_id: l.item_id, item_unit_id: l.item_unit_id ?? null, conversion_factor: Number(l.conversion_factor ?? 1),
@@ -748,7 +748,7 @@ function InvoiceForm({
                     </div>
 
                     <div className="col-span-5 md:col-span-1 flex items-center justify-end"><span className="text-sm font-medium tabular-nums">{fmtNum(lt, 2)}</span></div>
-                    <div className="col-span-1 flex justify-center"><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={lines.length === 1} onClick={() => setLines((cur) => cur.filter((_, i) => i !== idx))}><X className="h-4 w-4" /></Button></div>
+                    <div className="col-span-1 flex justify-center"><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={lines.length === 1} title={t("delete")} aria-label={t("delete")} onClick={() => setLines((cur) => cur.filter((_, i) => i !== idx))}><X className="h-4 w-4" /></Button></div>
                   </div>
                 );
               })}
@@ -794,11 +794,11 @@ function InvoiceView({
 }: {
   invoice: any; suppliers: any[]; items: any[]; allItemUnits: any[];
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const supabase = createClient();
 
-  const { data: lines = [] } = useQuery({
+  const { data: lines = [], isLoading: linesLoading } = useQuery({
     queryKey: ["invoice_items", invoice.id, open],
     enabled: open,
     queryFn: async () =>
@@ -840,7 +840,7 @@ function InvoiceView({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" title={t("details")} aria-label={t("details")}><Eye className="h-4 w-4" /></Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 pt-5 pb-3 border-b shrink-0">

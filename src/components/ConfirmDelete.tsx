@@ -26,7 +26,7 @@ export function ConfirmDelete({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         {trigger ?? (
-          <Button variant="ghost" size="icon" className="text-destructive">
+          <Button variant="ghost" size="icon" className="text-destructive" title={t("delete")} aria-label={t("delete")}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

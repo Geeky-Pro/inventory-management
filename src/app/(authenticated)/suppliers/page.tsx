@@ -31,11 +31,11 @@ type SupplierRow = {
 };
 
 export default function SuppliersPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: rowsLoading } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
       const [{ data: suppliers, error: suppliersError }, { data: balances, error: balancesError }] =
@@ -59,7 +59,7 @@ export default function SuppliersPage() {
       <PageHeader title={t("suppliers")}>
         {can("suppliers.manage") && <SForm onDone={refetch} />}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={rowsLoading}
         rows={rows}
         columns={[
           { key: "n", header: t("name"), cell: (r: SupplierRow) => r.name },
@@ -80,7 +80,7 @@ export default function SuppliersPage() {
                     <SForm row={r} onDone={refetch} />
                     <ConfirmDelete onConfirm={async () => {
                       const result = await deleteSupplier(r.id);
-                      if (!result.ok) toast.error(result.error);
+                      if (!result.ok) toast.error(translateError(result.error));
                       else { toast.success(t("delete_success")); refetch(); }
                     }} />
                   </>
@@ -99,7 +99,7 @@ function fmtBalance(value: number) {
 }
 
 function SForm({ row, onDone }: { row?: Partial<SupplierRow>; onDone: () => void }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(row?.name ?? "");
   const [phone, setPhone] = useState(row?.phone ?? "");
@@ -108,7 +108,7 @@ function SForm({ row, onDone }: { row?: Partial<SupplierRow>; onDone: () => void
   const [default_payment_type, setDefaultPaymentType] = useState(row?.default_payment_type ?? "cash");
   const [nameError, setNameError] = useState("");
   const supabase = createClient();
-  const { data: currencies = [] } = useQuery({
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
     queryKey: ["currencies"],
     queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
   });
@@ -123,7 +123,7 @@ function SForm({ row, onDone }: { row?: Partial<SupplierRow>; onDone: () => void
     const result = row?.id
       ? await updateSupplier(row.id, payload)
       : await createSupplier(payload);
-    if (!result.ok) return toast.error(result.error);
+    if (!result.ok) return toast.error(translateError(result.error));
     toast.success(t("save_success"));
     setOpen(false); setNameError(""); onDone();
   };
@@ -131,7 +131,7 @@ function SForm({ row, onDone }: { row?: Partial<SupplierRow>; onDone: () => void
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {row?.id ? <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
+        {row?.id ? <Button variant="ghost" size="icon" title={t("edit")} aria-label={t("edit")}><Pencil className="h-4 w-4" /></Button>
           : <Button><Plus className="h-4 w-4 me-1" />{t("add")}</Button>}
       </DialogTrigger>
       <DialogContent>

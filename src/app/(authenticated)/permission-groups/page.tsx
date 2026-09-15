@@ -40,22 +40,22 @@ type PermissionGroupItemRow = {
 };
 
 export default function PermissionGroupsPage() {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const { can, isLoading } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
 
-  const { data: groups = [] } = useQuery<PermissionGroupRow[]>({
+  const { data: groups = [], isLoading: groupsLoading } = useQuery<PermissionGroupRow[]>({
     queryKey: ["permission_groups"],
     queryFn: async () => (await supabase.from("permission_groups").select("*")).data ?? [],
     enabled: !isLoading,
   });
-  const { data: permissions = [] } = useQuery<PermissionRow[]>({
+  const { data: permissions = [], isLoading: permissionsLoading } = useQuery<PermissionRow[]>({
     queryKey: ["permissions_list"],
     queryFn: async () => (await supabase.from("permissions").select("*")).data ?? [],
     enabled: !isLoading,
   });
-  const { data: permissionGroupItems = [] } = useQuery<PermissionGroupItemRow[]>({
+  const { data: permissionGroupItems = [], isLoading: permissionGroupItemsLoading } = useQuery<PermissionGroupItemRow[]>({
     queryKey: ["permission_group_items"],
     queryFn: async () =>
       (await supabase.from("permission_group_items").select("group_id,permission_key")).data ?? [],
@@ -97,7 +97,7 @@ export default function PermissionGroupsPage() {
         )}
       </PageHeader>
 
-      <DataTable
+      <DataTable isLoading={groupsLoading || permissionsLoading || permissionGroupItemsLoading}
         rows={groups}
         columns={[
           { key: "name", header: t("group_name"), cell: (r) => r.name },
@@ -163,7 +163,7 @@ export default function PermissionGroupsPage() {
                       toast.success(t("delete_success"));
                       refetch();
                     } catch (err: any) {
-                      toast.error(err?.message || String(err));
+                      toast.error(translateError(err));
                     }
                   }}
                 />
@@ -189,7 +189,7 @@ function GroupDialog({
   onDone: () => void;
   children: React.ReactNode;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -279,7 +279,7 @@ function GroupDialog({
       setOpen(false);
       onDone();
     } catch (err: any) {
-      toast.error(err?.message || String(err));
+      toast.error(translateError(err));
     }
   };
 

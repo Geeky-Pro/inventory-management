@@ -30,11 +30,11 @@ import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 
 export default function CategoriesPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: rowsLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () =>
       (await supabase.from("categories").select("*").order("name_ar")).data ?? [],
@@ -76,7 +76,7 @@ export default function CategoriesPage() {
       <PageHeader title={t("categories")}>
         {can("items.manage") && <CategoryForm categories={rows} onDone={refetch} />}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={rowsLoading}
         rows={flattened}
         columns={[
           {
@@ -103,7 +103,7 @@ export default function CategoriesPage() {
                   <ConfirmDelete
                     onConfirm={async () => {
                       const { error } = await supabase.from("categories").delete().eq("id", r.id);
-                      if (error) toast.error(error.message);
+                      if (error) toast.error(translateError(error));
                       else {
                         toast.success(t("save_success"));
                         refetch();
@@ -128,7 +128,7 @@ function CategoryForm({
   categories?: any[];
   onDone: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [name_ar, setNameAr] = useState(row?.name_ar ?? "");
   const [name_en, setNameEn] = useState(row?.name_en ?? "");
@@ -184,11 +184,11 @@ function CategoryForm({
       if (row) {
         payload.updated_by = u.user?.id;
         const { error } = await supabase.from("categories").update(payload).eq("id", row.id);
-        if (error) return toast.error(error.message);
+        if (error) return toast.error(translateError(error));
       } else {
         payload.created_by = u.user?.id;
         const { error } = await supabase.from("categories").insert(payload);
-        if (error) return toast.error(error.message);
+        if (error) return toast.error(translateError(error));
       }
       toast.success(t("save_success"));
       setOpen(false);
@@ -202,7 +202,7 @@ function CategoryForm({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {row ? (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" title={t("edit")} aria-label={t("edit")}>
             <Pencil className="h-4 w-4" />
           </Button>
         ) : (

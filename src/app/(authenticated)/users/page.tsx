@@ -49,33 +49,33 @@ type PermDialogProps = {
 };
 
 export default function UsersPage() {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
 
-  const { data: profiles = [] } = useQuery({
+  const { data: profiles = [], isLoading: profilesLoading } = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => (await supabase.from("profiles").select("*").order("username")).data ?? [],
   });
-  const { data: permissions = [] } = useQuery({
+  const { data: permissions = [], isLoading: permissionsLoading } = useQuery({
     queryKey: ["permissions_list"],
     queryFn: async () =>
       (await supabase.from("permissions").select("*").order("category")).data ?? [],
   });
-  const { data: groups = [] } = useQuery({
+  const { data: groups = [], isLoading: groupsLoading } = useQuery({
     queryKey: ["pgroups"],
     queryFn: async () => (await supabase.from("permission_groups").select("*")).data ?? [],
   });
-  const { data: userGroups = [] } = useQuery({
+  const { data: userGroups = [], isLoading: userGroupsLoading } = useQuery({
     queryKey: ["upg_all"],
     queryFn: async () => (await supabase.from("user_permission_groups").select("*")).data ?? [],
   });
-  const { data: userPerms = [] } = useQuery({
+  const { data: userPerms = [], isLoading: userPermsLoading } = useQuery({
     queryKey: ["up_all"],
     queryFn: async () => (await supabase.from("user_permissions").select("*")).data ?? [],
   });
-  const { data: permissionGroupItems = [] } = useQuery({
+  const { data: permissionGroupItems = [], isLoading: permissionGroupItemsLoading } = useQuery({
     queryKey: ["permission_group_items"],
     queryFn: async () =>
       (await supabase.from("permission_group_items").select("*")).data ?? [],
@@ -134,7 +134,7 @@ export default function UsersPage() {
           <UserDialog trigger={<Button>{t("new_user")}</Button>} onDone={refetch} />
         )}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={profilesLoading || permissionsLoading || groupsLoading || userGroupsLoading || userPermsLoading || permissionGroupItemsLoading}
         rows={profiles}
         columns={[
           { key: "u", header: t("username"), cell: (r: ProfileRow) => r.username },
@@ -205,7 +205,7 @@ export default function UsersPage() {
                           toast.success(t("delete_success"));
                           refetch();
                         } catch (err: unknown) {
-                          toast.error(err instanceof Error ? err.message : String(err));
+                          toast.error(translateError(err));
                         }
                       }}
                     />
@@ -217,7 +217,7 @@ export default function UsersPage() {
                           await adminResetPassword({ data: { userId: r.id } });
                           toast.success(t("reset_email_sent"));
                         } catch (err: unknown) {
-                          toast.error(err instanceof Error ? err.message : String(err));
+                          toast.error(translateError(err));
                         }
                       }}
                     >
@@ -246,7 +246,7 @@ export default function UsersPage() {
 }
 
 function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDone, locale }: PermDialogProps) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set());
@@ -285,7 +285,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
         .in("group_id", groupsToDelete)
         .eq("user_id", profile.id);
       if (error) {
-        toast.error(error.message);
+        toast.error(translateError(error));
         return;
       }
     }
@@ -297,7 +297,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
         .in("permission_key", permsToDelete)
         .eq("user_id", profile.id);
       if (error) {
-        toast.error(error.message);
+        toast.error(translateError(error));
         return;
       }
     }
@@ -312,7 +312,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
       }));
       const { error } = await supabase.from("user_permission_groups").insert(payload);
       if (error) {
-        toast.error(error.message);
+        toast.error(translateError(error));
         return;
       }
     }
@@ -327,7 +327,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
       }));
       const { error } = await supabase.from("user_permissions").insert(payload);
       if (error) {
-        toast.error(error.message);
+        toast.error(translateError(error));
         return;
       }
     }
@@ -411,7 +411,7 @@ function PermDialog({ profile, permissions, groups, userGroups, userPerms, onDon
 
 function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
   const isEdit = !!profile;
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
@@ -426,7 +426,7 @@ function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
     if (isEdit) {
       setUsername(profile.username || "");
       setFullName(profile.full_name || "");
-      setEmail(profile.email || "");
+      setEmail("");
       setIsActive(!!profile.is_active);
     } else {
       setUsername("");
@@ -463,7 +463,7 @@ function UserDialog({ profile, trigger, onDone }: UserDialogProps) {
       setOpen(false);
       onDone?.();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(translateError(err));
     } finally {
       setLoading(false);
     }

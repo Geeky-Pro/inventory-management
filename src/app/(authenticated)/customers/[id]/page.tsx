@@ -19,20 +19,20 @@ import { Download, Plus, ArrowLeft } from "lucide-react";
 import { exportToExcel } from "@/lib/excel";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { addSupplierOpeningBalance, recordSupplierPayment } from "@/app/actions/suppliers";
+import { addCustomerOpeningBalance, recordCustomerPayment } from "@/app/actions/customers";
 
 type Tx = {
-  id: string; supplier_id: string; transaction_date: string; transaction_type: "debit"|"credit";
+  id: string; customer_id: string; transaction_date: string; transaction_type: "debit"|"credit";
   amount: number; currency_code: string; amount_local: number; reference_table: string|null;
   invoice_ref: string|null; payment_method: string|null; notes: string|null; running_balance_local: number;
 };
 
-export default function SupplierStatementPage() {
-  const { t , translateError} = useI18n();
+export default function CustomerStatementPage() {
+  const { t, translateError} = useI18n();
   const { can } = usePermissions();
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
-  const supplierId = params.id;
+  const customerId = params.id;
   const action = search.get("action");
   const qc = useQueryClient();
   const supabase = createClient();
@@ -41,27 +41,27 @@ export default function SupplierStatementPage() {
     queryKey: ["currencies"],
     queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
   });
-  const { data: supplier, isLoading: supplierLoading } = useQuery({
-    queryKey: ["supplier", supplierId],
-    queryFn: async () => (await supabase.from("suppliers").select("*").eq("id", supplierId).single()).data,
+  const { data: customer, isLoading: customerLoading } = useQuery({
+    queryKey: ["customer", customerId],
+    queryFn: async () => (await supabase.from("customers").select("*").eq("id", customerId).single()).data,
   });
   const { data: rows = [], isLoading: rowsLoading } = useQuery({
-    queryKey: ["supplier_statement", supplierId],
-    queryFn: async () => (await supabase.from("supplier_statement").select("*").eq("supplier_id", supplierId).order("transaction_date").order("created_at").order("id")).data ?? [],
+    queryKey: ["customer_statement", customerId],
+    queryFn: async () => (await supabase.from("customer_statement").select("*").eq("customer_id", customerId).order("transaction_date").order("created_at").order("id")).data ?? [],
   });
   const { data: balance, isLoading: balanceLoading } = useQuery({
-    queryKey: ["supplier_balance", supplierId],
-    queryFn: async () => (await supabase.from("supplier_balances").select("*").eq("supplier_id", supplierId).single()).data,
+    queryKey: ["customer_balance", customerId],
+    queryFn: async () => (await supabase.from("customer_balances").select("*").eq("customer_id", customerId).single()).data,
   });
   const refetch = () => {
-    qc.invalidateQueries({ queryKey: ["supplier_statement", supplierId] });
-    qc.invalidateQueries({ queryKey: ["supplier_balance", supplierId] });
-    qc.invalidateQueries({ queryKey: ["suppliers"] });
+    qc.invalidateQueries({ queryKey: ["customer_statement", customerId] });
+    qc.invalidateQueries({ queryKey: ["customer_balance", customerId] });
+    qc.invalidateQueries({ queryKey: ["customers"] });
   };
   useEffect(() => { if (action === "opening" || action === "payment") setDialog(action); }, [action]);
 
   const normalizedRows: Tx[] = useMemo(() => rows.flatMap((r) => {
-    if (!r.id || !r.supplier_id || !r.transaction_date || !r.transaction_type ||
+    if (!r.id || !r.customer_id || !r.transaction_date || !r.transaction_type ||
         r.amount == null || !r.currency_code || r.amount_local == null || r.running_balance_local == null) {
       return [];
     }
@@ -74,9 +74,9 @@ export default function SupplierStatementPage() {
     date: r.transaction_date, type: r.transaction_type, amount: r.amount, currency: r.currency_code,
     amount_local: r.amount_local, balance: r.running_balance_local, invoice_ref: r.invoice_ref,
     payment_method: r.payment_method, notes: r.notes,
-  })), "supplier_statement");
+  })), "customer_statement");
 
-  if (supplierLoading) {
+  if (customerLoading) {
     return (
       <div className="p-6 space-y-4">
         <div className="h-8 w-1/3 bg-muted animate-pulse rounded" />
@@ -84,22 +84,22 @@ export default function SupplierStatementPage() {
       </div>
     );
   }
-  if (!supplier) return <div className="p-6">{t("no_data")}</div>;
+  if (!customer) return <div className="p-6">{t("no_data")}</div>;
 
   return (
     <div>
-      <PageHeader title={`${t("supplier_statement")}: ${supplier.name}`}>
-        <Button asChild variant="outline"><Link href="/suppliers"><ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" />{t("back")}</Link></Button>
+      <PageHeader title={`${t("customer_statement")}: ${customer.name}`}>
+        <Button asChild variant="outline"><Link href="/customers"><ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" />{t("back")}</Link></Button>
         <Button variant="outline" onClick={exportStatement}><Download className="h-4 w-4 me-1" />{t("export_excel")}</Button>
-        {can("suppliers.manage") && <><Button onClick={() => setDialog("opening")}><Plus className="h-4 w-4 me-1" />{t("opening_balance")}</Button>
-        <Button onClick={() => setDialog("payment")}><Plus className="h-4 w-4 me-1" />{t("supplier_payment")}</Button></>}
+        {can("customers.manage") && <><Button onClick={() => setDialog("opening")}><Plus className="h-4 w-4 me-1" />{t("opening_balance")}</Button>
+        <Button onClick={() => setDialog("payment")}><Plus className="h-4 w-4 me-1" />{t("credit_d")}</Button></>}
       </PageHeader>
       <div className="grid gap-3 sm:grid-cols-3 mb-4">
         <div className="rounded-md border bg-card p-4"><div className="text-sm text-muted-foreground">{t("total_debit")}</div><strong className="text-emerald-600 dark:text-emerald-500">{fmtNum(Number(balance?.total_debit ?? 0),2)}</strong></div>
         <div className="rounded-md border bg-card p-4"><div className="text-sm text-muted-foreground">{t("total_credit")}</div><strong className="text-destructive">{fmtNum(Number(balance?.total_credit ?? 0),2)}</strong></div>
         <div className="rounded-md border bg-card p-4"><div className="text-sm text-muted-foreground">{t("balance")}</div><strong className={Number(balance?.balance) > 0 ? "text-emerald-600 dark:text-emerald-500" : Number(balance?.balance) < 0 ? "text-destructive" : ""}>{fmtNum(Number(balance?.balance ?? 0),2)}</strong></div>
       </div>
-      <DataTable isLoading={currenciesLoading || supplierLoading || rowsLoading || balanceLoading} rows={normalizedRows} columns={[
+      <DataTable isLoading={currenciesLoading || customerLoading || rowsLoading || balanceLoading} rows={normalizedRows} columns={[
         {key:"d",header:t("date"),cell:(r:Tx)=>fmtDate(r.transaction_date)},
         {key:"t",header:t("transaction_type"),cell:(r:Tx)=>r.transaction_type==="debit"?t("debit"):t("credit_d")},
         {key:"a",header:t("amount"),cell:(r:Tx)=><span className={r.transaction_type === "debit" ? "text-emerald-600 dark:text-emerald-500" : "text-destructive"}>{fmtNum(Number(r.amount),2)} {r.currency_code}</span>},
@@ -109,12 +109,12 @@ export default function SupplierStatementPage() {
         {key:"pm",header:t("payment_method"),cell:(r:Tx)=>r.payment_method?t(r.payment_method as never):"-"},
         {key:"n",header:t("notes"),cell:(r:Tx)=>r.notes??"-"},
       ]}/>
-      <LedgerDialog kind={dialog} supplierId={supplierId} currencies={currencies} onClose={()=>setDialog("")} onDone={refetch}/>
+      <LedgerDialog kind={dialog} customerId={customerId} currencies={currencies} onClose={()=>setDialog("")} onDone={refetch}/>
     </div>
   );
 }
 
-function LedgerDialog({kind,supplierId,currencies,onClose,onDone}:{kind:string;supplierId:string;currencies:Array<{code:string;is_base?:boolean}>;onClose:()=>void;onDone:()=>void}) {
+function LedgerDialog({kind,customerId,currencies,onClose,onDone}:{kind:string;customerId:string;currencies:Array<{code:string;is_base?:boolean}>;onClose:()=>void;onDone:()=>void}) {
   const {t, translateError}=useI18n();
   const [amount,setAmount]=useState(0);
   const [currency,setCurrency]=useState("YER");
@@ -135,12 +135,12 @@ function LedgerDialog({kind,supplierId,currencies,onClose,onDone}:{kind:string;s
     if(baseCurrency && currency===baseCurrency && rate!==1){toast.error(t("invalid_amount"));return;}
     setPending(true);
     const result=kind==="opening"
-      ? await addSupplierOpeningBalance({operationId,supplierId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,notes})
-      : await recordSupplierPayment({operationId,supplierId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,paymentMethod:method,notes});
+      ? await addCustomerOpeningBalance({operationId,customerId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,notes})
+      : await recordCustomerPayment({operationId,customerId,amountLocal:amount*rate,currencyCode:currency,exchangeRate:rate,transactionDate:date,paymentMethod:method,notes});
     if(!result.ok){toast.error(translateError(result.error));setPending(false);return;}
     toast.success(t("save_success")); onClose(); onDone(); setPending(false);
   };
-  return <Dialog open={!!kind} onOpenChange={o=>!o&&onClose()}><DialogContent><DialogHeader><DialogTitle>{kind==="opening"?t("opening_balance"):t("supplier_payment")}</DialogTitle></DialogHeader>
+  return <Dialog open={!!kind} onOpenChange={o=>!o&&onClose()}><DialogContent><DialogHeader><DialogTitle>{kind==="opening"?t("opening_balance"):t("credit_d")}</DialogTitle></DialogHeader>
     <div className="grid gap-3 sm:grid-cols-2">
       <div><Label>{t("date")}</Label><DatePicker value={date} onValueChange={setDate}/></div>
       <div><Label>{t("amount")}</Label><Input type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(Number(e.target.value))}/></div>

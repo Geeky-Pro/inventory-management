@@ -35,17 +35,17 @@ import { addCustomerOpeningBalance, recordCustomerPayment } from "@/app/actions/
 
 
 export default function DebtsPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
   const [customerId, setCustomerId] = useState<string>("_");
 
-  const { data: customers = [] } = useQuery({
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => (await supabase.from("customers").select("*").order("name")).data ?? [],
   });
-  const { data: txs = [] } = useQuery({
+  const { data: txs = [], isLoading: txsLoading } = useQuery({
     queryKey: ["debt_tx", customerId],
     queryFn: async () => {
       let q = supabase.from("debt_transactions").select("*").order("transaction_date");
@@ -53,7 +53,7 @@ export default function DebtsPage() {
       return (await q).data ?? [];
     },
   });
-  const { data: currencies = [] } = useQuery({
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
     queryKey: ["currencies"],
     queryFn: async () => (await supabase.from("currencies").select("*")).data ?? [],
   });
@@ -174,7 +174,7 @@ export default function DebtsPage() {
           </div>
         </div>
       </div>
-      <DataTable
+      <DataTable isLoading={customersLoading || txsLoading || currenciesLoading}
         rows={statement}
         columns={[
           { key: "d", header: t("date"), cell: (r: any) => fmtDate(r.transaction_date) },
@@ -210,7 +210,7 @@ function TxForm({
   defaultCustomer?: string;
   onDone: () => void;
 }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const baseCur = currencies.find((c) => c.is_base)?.code ?? "YER";
   const [customer_id, setCustomer] = useState<string | null>(defaultCustomer ?? null);
@@ -233,7 +233,7 @@ function TxForm({
     const result = transaction_type === "opening"
       ? await addCustomerOpeningBalance({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` })
       : await recordCustomerPayment({ operationId, customerId: customer_id, amountLocal: amount * exchange_rate, currencyCode: currency_code, exchangeRate: exchange_rate, transactionDate: transaction_date, paymentMethod: payment_method, notes: `${invoice_ref ? `Ref: ${invoice_ref}. ` : ""}${notes}` });
-    if (!result.ok) { toast.error(result.error); return; }
+    if (!result.ok) { toast.error(translateError(result.error)); return; }
 
     toast.success(t("save_success"));
     setOpen(false);

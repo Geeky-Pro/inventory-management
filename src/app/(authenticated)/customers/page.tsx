@@ -24,11 +24,11 @@ import { toast } from "sonner";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 
 export default function CustomersPage() {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const { can } = usePermissions();
   const qc = useQueryClient();
   const supabase = createClient();
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: rowsLoading } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => (await supabase.from("customers").select("*").order("name")).data ?? [],
   });
@@ -38,7 +38,7 @@ export default function CustomersPage() {
       <PageHeader title={t("customers")}>
         {can("customers.manage") && <CForm onDone={refetch} />}
       </PageHeader>
-      <DataTable
+      <DataTable isLoading={rowsLoading}
         rows={rows}
         columns={[
           { key: "n", header: t("name"), cell: (r: any) => r.name },
@@ -55,7 +55,7 @@ export default function CustomersPage() {
                   <ConfirmDelete
                     onConfirm={async () => {
                       const { error } = await supabase.from("customers").delete().eq("id", r.id);
-                      if (error) toast.error(error.message);
+                      if (error) toast.error(translateError(error));
                       else {
                         toast.success(t("save_success"));
                         refetch();
@@ -72,7 +72,7 @@ export default function CustomersPage() {
 }
 
 function CForm({ row, onDone }: { row?: any; onDone: () => void }) {
-  const { t } = useI18n();
+  const { t , translateError} = useI18n();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(row?.name ?? "");
   const [phone, setPhone] = useState(row?.phone ?? "");
@@ -86,7 +86,7 @@ function CForm({ row, onDone }: { row?: any; onDone: () => void }) {
     const { error } = row
       ? await supabase.from("customers").update(payload).eq("id", row.id)
       : await supabase.from("customers").insert(payload);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success(t("save_success"));
     setOpen(false);
     onDone();
@@ -95,7 +95,7 @@ function CForm({ row, onDone }: { row?: any; onDone: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {row ? (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" title={t("edit")} aria-label={t("edit")}>
             <Pencil className="h-4 w-4" />
           </Button>
         ) : (

@@ -10,7 +10,7 @@ export async function addCustomerOpeningBalance(input: {
   const { data, error } = await supabase.rpc("add_customer_opening_balance", {
     _operation_id: input.operationId, _customer_id: input.customerId, _amount_local: input.amountLocal,
     _currency_code: input.currencyCode, _exchange_rate: input.exchangeRate,
-    _transaction_date: input.transactionDate, _notes: input.notes ?? null,
+    _transaction_date: input.transactionDate, _notes: input.notes ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true, id: data };
@@ -24,7 +24,7 @@ export async function recordCustomerPayment(input: {
   const { data, error } = await supabase.rpc("record_customer_payment", {
     _operation_id: input.operationId, _customer_id: input.customerId, _amount_local: input.amountLocal,
     _currency_code: input.currencyCode, _exchange_rate: input.exchangeRate,
-    _transaction_date: input.transactionDate, _payment_method: input.paymentMethod, _notes: input.notes ?? null,
+    _transaction_date: input.transactionDate, _payment_method: input.paymentMethod, _notes: input.notes ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true, id: data };

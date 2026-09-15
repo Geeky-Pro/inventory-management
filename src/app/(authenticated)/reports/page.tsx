@@ -21,11 +21,11 @@ export default function ReportsPage() {
   const [to, setTo] = useState("");
   const supabase = createClient();
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [], isLoading: itemsLoading } = useQuery({
     queryKey: ["items"],
     queryFn: async () => (await supabase.from("items").select("*")).data ?? [],
   });
-  const { data: stock = [] } = useQuery({
+  const { data: stock = [], isLoading: stockLoading } = useQuery({
     queryKey: ["mv_all", from, to],
     queryFn: async () => {
       let q = supabase.from("stock_movements").select("*");
@@ -34,7 +34,7 @@ export default function ReportsPage() {
       return (await q).data ?? [];
     },
   });
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ["inv_all", from, to],
     queryFn: async () => {
       let q = supabase.from("purchase_invoices").select("*");
@@ -105,7 +105,7 @@ export default function ReportsPage() {
           {t("export_pdf")}
         </Button>
       </div>
-      <DataTable
+      <DataTable isLoading={itemsLoading || stockLoading || invoicesLoading}
         rows={inventoryRows}
         columns={[
           { key: "i", header: t("item"), cell: (r: any) => r.item },
@@ -119,7 +119,7 @@ export default function ReportsPage() {
       <div className="text-sm mb-2">
         {t("total")}: <strong>{fmtNum(totalInvoices, 2)}</strong>
       </div>
-      <DataTable
+      <DataTable isLoading={itemsLoading || stockLoading || invoicesLoading}
         rows={invoices as any[]}
         columns={[
           { key: "n", header: t("invoice_no"), cell: (r: any) => r.invoice_no },

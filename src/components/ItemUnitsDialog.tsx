@@ -57,7 +57,7 @@ export function ItemUnitsDialog({
   item: any;
   canManage: boolean;
 }) {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<ItemUnit | null>(null);
@@ -96,7 +96,7 @@ export function ItemUnitsDialog({
       .from("item_units")
       .update({ is_base_unit: true })
       .eq("id", iu.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else invalidate();
   };
 
@@ -105,7 +105,7 @@ export function ItemUnitsDialog({
       .from("item_units")
       .update({ is_purchase_default: true })
       .eq("id", iu.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else invalidate();
   };
 
@@ -115,7 +115,7 @@ export function ItemUnitsDialog({
       return;
     }
     const { error } = await supabase.from("item_units").delete().eq("id", iu.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else invalidate();
   };
 
@@ -261,7 +261,7 @@ function ItemUnitForm({
   onCancel: () => void;
   existingCount: number;
 }) {
-  const { t, locale } = useI18n();
+  const { t, locale , translateError} = useI18n();
   const [unit_id, setUnitId] = useState(editing?.unit_id ?? "");
   const [factor, setFactor] = useState<number>(editing?.conversion_factor ?? 1);
   const [isBase, setIsBase] = useState(editing?.is_base_unit ?? existingCount === 0);
@@ -305,7 +305,7 @@ function ItemUnitForm({
     }
 
     setSaving(false);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else { toast.success(t("save_success")); onDone(); }
   };
 

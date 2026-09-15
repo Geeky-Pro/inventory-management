@@ -10,6 +10,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { ReactNode } from "react";
+import { useI18n } from "@/lib/i18n";
 
 export function ConfirmAction({
   onConfirm,
@@ -24,6 +25,8 @@ export function ConfirmAction({
   confirmLabel: string;
   description?: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
@@ -33,7 +36,7 @@ export function ConfirmAction({
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : <AlertDialogDescription />}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

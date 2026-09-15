@@ -2,6 +2,7 @@
 
 import { resolveAuthEmail } from "@/lib/auth";
 import { getAdminSupabase } from "@/lib/api/admin";
+import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const UserDataSchema = z.object({
@@ -15,10 +16,20 @@ const UserDataSchema = z.object({
 });
 
 export async function createUser({ data }: { data: any }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+  
+  const { data: hasPerm } = await supabase.rpc("has_permission", {
+    _user_id: user.id,
+    _permission: "users.manage"
+  });
+  if (!hasPerm) throw new Error("Permission denied");
+
   const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
   const resolvedEmail = parsedData.email ?? resolveAuthEmail(parsedData.username).email;
-  const actorId = parsedData.actorId ?? null;
+  const actorId = user.id as string;
 
   if (!resolvedEmail) throw new Error("Email is required for creating a user");
 
@@ -45,15 +56,15 @@ export async function createUser({ data }: { data: any }) {
   const userId = created.user.id;
 
   const profileUpdate = await client.rpc("admin_update_profile", {
-    p_user_id: userId,
-    p_actor_id: actorId,
+    p_user_id: userId as string,
+    p_actor_id: actorId || "",
     p_username: parsedData.username,
-    p_full_name: parsedData.full_name ?? null,
+    p_full_name: parsedData.full_name as string,
     p_is_active: parsedData.is_active ?? true,
   });
   if (profileUpdate.error) {
     try {
-      await client.auth.admin.deleteUser(userId);
+      await client.auth.admin.deleteUser(userId as string);
     } catch (rollbackErr) {
       console.error("Failed to rollback created auth user after profile update error:", rollbackErr);
     }
@@ -61,7 +72,8 @@ export async function createUser({ data }: { data: any }) {
   }
 
   if (typeof parsedData.is_active === "boolean" && parsedData.is_active === false) {
-    const { error: banError } = await client.auth.admin.updateUserById(userId, {
+    const { error: banError } = await client.auth.admin.updateUserById(
+      userId as string, {
       ban_duration: "876000h",
     });
     if (banError) throw banError;
@@ -71,9 +83,20 @@ export async function createUser({ data }: { data: any }) {
 }
 
 export async function updateUser({ data }: { data: any }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+
+  const { data: hasPerm } = await supabase.rpc("has_permission", {
+    _user_id: user.id,
+    _permission: "users.manage"
+  });
+  if (!hasPerm) throw new Error("Permission denied");
+
   const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
-  const { userId, username, full_name, email, is_active, actorId } = parsedData;
+  const { userId, username, full_name, email, is_active } = parsedData;
+  const actorId = user.id as string;
 
   const updatePayload: Record<string, unknown> = {};
   if (email) updatePayload.email = email;
@@ -85,7 +108,7 @@ export async function updateUser({ data }: { data: any }) {
 
   if (Object.keys(updatePayload).length) {
     const { error: updateError } = await client.auth.admin.updateUserById(
-      userId,
+      userId as string,
       updatePayload as any,
     );
     if (updateError) throw updateError;
@@ -98,11 +121,11 @@ export async function updateUser({ data }: { data: any }) {
   
   if (Object.keys(profileUpdate).length) {
     const up = await client.rpc("admin_update_profile", {
-      p_user_id: userId,
-      p_actor_id: actorId ?? userId,
-      p_username: username ?? null,
-      p_full_name: full_name ?? null,
-      p_is_active: typeof is_active === "boolean" ? is_active : null,
+      p_user_id: userId as string,
+      p_actor_id: (actorId || userId) as string,
+      p_username: username as string,
+      p_full_name: full_name as string,
+      p_is_active: typeof is_active === "boolean" ? is_active : true,
     });
     if (up.error) throw up.error;
   }
@@ -111,17 +134,28 @@ export async function updateUser({ data }: { data: any }) {
 }
 
 export async function deleteUser({ data }: { data: any }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+
+  const { data: hasPerm } = await supabase.rpc("has_permission", {
+    _user_id: user.id,
+    _permission: "users.manage"
+  });
+  if (!hasPerm) throw new Error("Permission denied");
+
   const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
-  const { userId, actorId } = parsedData;
+  const { userId } = parsedData;
+  const actorId = user.id as string;
 
   const prof = await client.rpc("admin_delete_user_data", {
-    p_user_id: userId,
-    p_actor_id: actorId ?? userId,
+    p_user_id: userId as string,
+    p_actor_id: (actorId || userId) as string,
   });
   if (prof.error) throw new Error(`Failed to delete user data for ${userId}: ${prof.error.message}`);
 
-  const { error: deleteError } = await client.auth.admin.deleteUser(userId);
+  const { error: deleteError } = await client.auth.admin.deleteUser(userId as string);
   if (deleteError) {
     console.error(`Auth deletion failed for ${userId} after DB cleanup:`, deleteError);
     throw new Error(`Failed to delete auth user ${userId} after removing DB rows: ${deleteError.message}`);
@@ -131,11 +165,21 @@ export async function deleteUser({ data }: { data: any }) {
 }
 
 export async function adminResetPassword({ data }: { data: any }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+
+  const { data: hasPerm } = await supabase.rpc("has_permission", {
+    _user_id: user.id,
+    _permission: "users.manage"
+  });
+  if (!hasPerm) throw new Error("Permission denied");
+
   const parsedData = UserDataSchema.parse(data);
   const client = getAdminSupabase();
   const { userId } = parsedData;
   
-  const { data: userResult, error: userError } = await client.auth.admin.getUserById(userId);
+  const { data: userResult, error: userError } = await client.auth.admin.getUserById(userId as string);
   if (userError) throw userError;
 
   const email = userResult.user?.email;

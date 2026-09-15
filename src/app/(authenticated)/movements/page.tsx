@@ -30,16 +30,16 @@ export default function MovementsPage() {
   const [catId, setCatId] = useState<string>("_");
   const supabase = createClient();
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [], isLoading: itemsLoading } = useQuery({
     queryKey: ["items"],
     queryFn: async () => (await supabase.from("items").select("*").order("name_ar")).data ?? [],
   });
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => (await supabase.from("categories").select("*")).data ?? [],
   });
 
-  const { data: movements = [] } = useQuery({
+  const { data: movements = [], isLoading: movementsLoading } = useQuery({
     queryKey: ["movements", from, to, itemId, catId],
     queryFn: async () => {
       let q = supabase
@@ -143,7 +143,7 @@ export default function MovementsPage() {
           </Select>
         </div>
       </div>
-      <DataTable
+      <DataTable isLoading={itemsLoading || categoriesLoading || movementsLoading}
         rows={movements as any[]}
         columns={[
           { key: "d", header: t("date"), cell: (r: any) => fmtDate(r.movement_date) },
